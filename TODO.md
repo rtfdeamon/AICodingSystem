@@ -1,5 +1,78 @@
 # TODO
 
+## Ревизия на 2026-03-27 v16 (автоматический проход; coverage 87% → 93% + 77 новых тестов + lint clean + best practices update)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **718 passed** (было 641, +77 новых тестов)
+- `backend/.venv/bin/pytest --cov=backend/app --cov-report=term -q` -> **TOTAL 93%** (было 87%)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!** (по-прежнему 0 issues)
+- `backend/.venv/bin/mypy backend/app --ignore-missing-imports` -> **Success: no issues found in 96 source files**
+- `frontend: npx vitest run` -> **54 passed**
+- `frontend: npm run build` -> **OK**
+
+### Что сделано в этом проходе
+
+- [x] **Coverage: 87% → 93% (+77 новых backend тестов)**
+  - Новые тест-файлы:
+    - `tests/test_main.py`: покрытие main.py (38% → ~85%) — create_app, health, lifespan, WebSocket, CORS
+    - `tests/test_database.py`: покрытие database.py (42% → ~90%) — get_db, init_db (sqlite/postgres), close_db
+    - `tests/test_redis.py`: покрытие redis.py (57% → ~95%) — init/close/get_redis_pool/get_redis
+    - `tests/test_api/test_reviews.py`: покрытие reviews.py (46% → ~85%) — list, submit, AI trigger
+    - `tests/test_api/test_ai_logs.py`: покрытие ai_logs.py (60% → ~95%) — list/filter/paginate/stats/get
+    - `tests/test_api/test_test_results.py`: покрытие test_results.py (57% → ~90%) — list/get/trigger/generate
+    - `tests/test_api/test_github_oauth.py`: покрытие github_oauth.py (31% → ~80%) — URL, callback, error paths
+    - `tests/test_api/test_context.py`: покрытие context.py (60% → ~85%) — index/status/search/deps
+  - Расширенные тесты:
+    - `tests/test_services/test_websocket_manager.py`: +10 тестов — _send_safe, publish_event, edge cases
+
+- [x] **Pytest warnings: 42 → 29**
+  - Исправлено в `test_main.py`, `test_database.py`, `test_redis.py`, `test_ci/test_test_runner.py`:
+    - Убран `pytestmark = pytest.mark.asyncio` из файлов с sync функциями
+    - Добавлен `@pytest.mark.asyncio` только к async функциям
+  - Оставшиеся 29 warnings — из существующих файлов с `pytestmark` и PytestCollectionWarning
+
+- [x] **Lint: 0 issues (All checks passed!)**
+  - Все новые тест-файлы прошли ruff check без issues
+  - Исправлены N806, E501, F401, SIM117, SIM105, B017
+
+### Что осталось открытым (приоритет для следующего прохода)
+
+1. [x] ~~Coverage 87% → 90%~~ **ДОСТИГНУТО: 93%**
+2. [ ] **Coverage 93% → 95%**: оставшиеся low-coverage модули:
+   - `main.py` (~85%), `database.py` (~90%), `deployer.py` (81%), `dashboard_service.py` (81%)
+   - `notification_service.py` (83%), `kanban_service.py` (84%), `state_machine.py` (90%)
+3. [ ] **Real-time contract**: подключить `subscribeProject()`/`unsubscribeProject()` в KanbanBoard
+4. [ ] **Project context**: убрать `DEFAULT_PROJECT_ID='default'` и auto-create
+5. [ ] **Ticket artifact center**: подключить все вкладки TicketDetail к реальным API
+6. [ ] **AI review grounding**: подключить реальный git diff в review_agent
+7. [ ] **E2E tests**: установить Playwright browsers, запустить smoke с dev-сервером
+8. [ ] **Frontend component tests**: написать RTL тесты для LoginPage, KanbanBoard, TicketDetail
+9. [ ] **Pytest warnings**: довести 29 → 0 (убрать pytestmark из оставшихся файлов)
+
+### Best Practices Backlog (обновлено 2026-03-27 v16)
+
+#### AI Agent Orchestration (новые)
+- [ ] Внедрить agent capability scoring: динамический выбор агента на основе исторических метрик успешности (latency, quality, cost) для каждого типа задачи
+- [ ] Добавить structured output validation: JSON schema validation для ответов AI агентов перед парсингом, с retry на malformed output
+- [ ] Реализовать agent response caching: кэширование планов и ревью для идентичных контекстов (ticket+diff hash) для экономии API calls
+
+#### Code Quality Guardrails (новые)
+- [ ] Добавить AST-level validation для AI-генерированного кода: проверка синтаксиса, import resolution, type consistency до мержа
+- [ ] Внедрить diff size limits: автоматическое разбиение больших генераций на reviewable chunks (<500 LOC per review)
+- [ ] Реализовать semantic diff comparison: сравнение AI-генерированного кода с acceptance criteria через embedding similarity
+
+#### Security (новые)
+- [ ] Добавить SBOM (Software Bill of Materials) генерацию для AI-предложенных dependencies
+- [ ] Внедрить secret scanning в AI-генерированном коде до коммита (prevent credential leaks)
+- [ ] Реализовать sandbox execution для AI-сгенерированных тестов (изоляция от production data)
+
+#### Observability (новые)
+- [ ] Добавить per-agent cost dashboards с alerts на budget thresholds
+- [ ] Внедрить quality regression tracking: мониторинг тренда quality score AI ревью vs human ревью
+- [ ] Реализовать latency SLO tracking: <30s для planning, <60s для coding, <20s для review
+
+---
+
 ## Ревизия на 2026-03-27 v15 (автоматический проход; coverage boost + ruff fix + RBAC alignment + best practices)
 
 Проверено командами:
@@ -64,9 +137,7 @@
 1. [x] ~~Coverage 81% → 85%~~ **ДОСТИГНУТО: 87%**
 2. [x] ~~Ruff 48 issues~~ **ДОСТИГНУТО: 0 issues**
 3. [x] ~~RBAC matrix alignment~~ **ДОСТИГНУТО: developer can review, pm_lead only for production**
-4. [ ] **Coverage 87% → 90%**: оставшиеся low-coverage модули:
-   - `main.py` (38%), `database.py` (42%), `rate_limiter.py` (54%), `redis.py` (57%)
-   - `websocket_manager.py` (67%), `github_oauth.py` (31%)
+4. [x] ~~**Coverage 87% → 90%**~~ **ДОСТИГНУТО в v16: 93%**
 5. [ ] **Real-time contract**: подключить `subscribeProject()`/`unsubscribeProject()` в KanbanBoard
 6. [ ] **Project context**: убрать `DEFAULT_PROJECT_ID='default'` и auto-create
 7. [ ] **Ticket artifact center**: подключить все вкладки TicketDetail к реальным API

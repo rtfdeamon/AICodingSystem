@@ -15,8 +15,6 @@ from app.ci.test_runner import (
     run_tests,
 )
 
-pytestmark = pytest.mark.asyncio
-
 _TEST_PROJECT = "/var/test/project"  # noqa: S105
 
 
@@ -88,6 +86,7 @@ def test_extract_metrics_with_coverage() -> None:
 # ── run_tests ─────────────────────────────────────────────────────────
 
 
+@pytest.mark.asyncio
 @patch("app.ci.test_runner._run_subprocess", new_callable=AsyncMock)
 async def test_run_tests_unit(mock_subprocess: AsyncMock) -> None:
     mock_subprocess.return_value = (0, "10 passed in 5.0s", "")
@@ -96,6 +95,7 @@ async def test_run_tests_unit(mock_subprocess: AsyncMock) -> None:
     assert result.passed is True
 
 
+@pytest.mark.asyncio
 @patch("app.ci.test_runner._run_subprocess", new_callable=AsyncMock)
 async def test_run_tests_integration(mock_subprocess: AsyncMock) -> None:
     mock_subprocess.return_value = (0, "5 passed in 10.0s", "")
@@ -103,6 +103,7 @@ async def test_run_tests_integration(mock_subprocess: AsyncMock) -> None:
     assert result.tool_name == "pytest"
 
 
+@pytest.mark.asyncio
 @patch("app.ci.test_runner._run_subprocess", new_callable=AsyncMock)
 async def test_run_tests_e2e(mock_subprocess: AsyncMock) -> None:
     mock_subprocess.return_value = (0, '{"stats":{"expected":3,"unexpected":0,"skipped":1}}', "")
@@ -112,6 +113,7 @@ async def test_run_tests_e2e(mock_subprocess: AsyncMock) -> None:
     assert result.skipped == 1
 
 
+@pytest.mark.asyncio
 @patch("app.ci.test_runner._run_subprocess", new_callable=AsyncMock)
 async def test_run_tests_security(mock_subprocess: AsyncMock) -> None:
     mock_subprocess.return_value = (0, '{"results":[]}', "")
@@ -120,6 +122,7 @@ async def test_run_tests_security(mock_subprocess: AsyncMock) -> None:
     assert result.passed is True
 
 
+@pytest.mark.asyncio
 async def test_run_tests_unknown_type() -> None:
     result = await run_tests(_TEST_PROJECT, "unknown_type")
     assert result.passed is False
@@ -127,6 +130,7 @@ async def test_run_tests_unknown_type() -> None:
     assert "Unknown test type" in result.log_output
 
 
+@pytest.mark.asyncio
 @patch("app.ci.test_runner._run_subprocess", new_callable=AsyncMock)
 async def test_run_tests_with_failures(mock_subprocess: AsyncMock) -> None:
     mock_subprocess.return_value = (1, "8 passed, 2 failed in 5.0s", "")
@@ -135,6 +139,7 @@ async def test_run_tests_with_failures(mock_subprocess: AsyncMock) -> None:
     assert result.failed == 2
 
 
+@pytest.mark.asyncio
 @patch("app.ci.test_runner._run_subprocess", new_callable=AsyncMock)
 async def test_run_tests_e2e_json_parse_error(mock_subprocess: AsyncMock) -> None:
     """When Playwright output is not valid JSON, falls back to text parsing."""

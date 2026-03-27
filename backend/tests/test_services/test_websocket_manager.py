@@ -148,3 +148,74 @@ async def test_disconnect_cleans_project_viewers() -> None:
 
     assert user_id not in mgr._project_viewers.get("project-1", set())
     assert user_id not in mgr._project_viewers.get("project-2", set())
+
+
+async def test_send_safe_returns_true_on_success() -> None:
+    mgr = ConnectionManager()
+    ws = _mock_ws(connected=True)
+    result = await mgr._send_safe(ws, {"type": "test"})
+    assert result is True
+    ws.send_json.assert_awaited_once()
+
+
+async def test_send_safe_returns_false_on_exception() -> None:
+    mgr = ConnectionManager()
+    ws = _mock_ws(connected=True)
+    ws.send_json.side_effect = RuntimeError("broken")
+    result = await mgr._send_safe(ws, {"type": "test"})
+    assert result is False
+
+
+async def test_send_safe_returns_false_when_disconnected() -> None:
+    mgr = ConnectionManager()
+    ws = _mock_ws(connected=False)
+    result = await mgr._send_safe(ws, {"type": "test"})
+    assert result is False
+    ws.send_json.assert_not_awaited()
+
+
+async def test_publish_event_success() -> None:
+    from unittest.mock import patch
+
+    mgr = ConnectionManager()
+    mock_redis = AsyncMock()
+
+    with patch(
+        "app.redis.get_redis_pool",
+        return_value=mock_redis,
+    ):
+        await mgr.publish_event("ch-1", {"type": "test"})
+        mock_redis.publish.assert_awaited_once()
+
+
+async def test_publish_event_redis_unavailable() -> None:
+    from unittest.mock import patch
+
+    mgr = ConnectionManager()
+
+    with patch(
+        "app.redis.get_redis_pool",
+        side_effect=RuntimeError("no redis"),
+    ):
+        await mgr.publish_event("ch-1", {"type": "test"})  # Should not raise
+
+
+async def test_disconnect_nonexistent_user() -> None:
+    mgr = ConnectionManager()
+    ws = _mock_ws()
+    await mgr.disconnect(ws, "nonexistent")  # Should not raise
+
+
+async def test_unsubscribe_nonexistent_project() -> None:
+    mgr = ConnectionManager()
+    await mgr.unsubscribe_project("user-1", "nonexistent")  # Should not raise
+
+
+async def test_broadcast_to_empty_project() -> None:
+    mgr = ConnectionManager()
+    await mgr.broadcast_to_project("empty-project", {"type": "test"})  # Should not raise
+
+
+async def test_broadcast_to_user_no_connections() -> None:
+    mgr = ConnectionManager()
+    await mgr.broadcast_to_user("unknown-user", {"type": "test"})  # Should not raise
