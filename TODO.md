@@ -1,5 +1,96 @@
 # TODO
 
+## Ревизия на 2026-03-28 v34 (автоматический проход; 56 best practices + SA feedback loop + regression guard + multi-model router + agent safety + 2663 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **2663 passed, 0 warnings** (было 2534, +129 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Static Analysis Feedback Loop** (`app/quality/static_analysis_loop.py`)
+  - Iterative SA-driven prompting to fix code quality issues
+  - Parse SA tool output (Bandit, Pylint, Ruff, generic) into structured findings
+  - Classify findings by category: security, reliability, readability, performance
+  - Generate targeted fix prompts from finding context
+  - Track iteration history with finding count trend
+  - Convergence detection: stop when no new findings are resolved
+  - Weighted scoring by category (security 2×, reliability 1.5×)
+  - Quality gate: configurable thresholds per category
+  - Batch analysis across multiple code files
+  - Based on Bouzenia & Pradel "Static Analysis as a Feedback Loop" (arXiv:2508.14419, Aug 2025)
+  - ~40 tests in `test_static_analysis_loop.py`
+
+- [x] **Regression Test Guard** (`app/quality/regression_test_guard.py`)
+  - Behavioral fingerprinting: hash-based signatures of code behavior
+  - Semantic diff detection: distinguish semantic-altering from cosmetic changes
+  - Function signature change detection
+  - Import removal tracking
+  - Complexity reduction warning (possible lost logic)
+  - Code size reduction flagging
+  - Regression scoring: weighted by severity
+  - History tracking: full audit of all versions and regressions found
+  - Quality gate: configurable regression tolerance
+  - Batch regression scanning across multiple code pairs
+  - Based on Yang et al. "ReCatcher" (arXiv:2507.19390, Jul 2025) and Chen et al. (arXiv:2603.23443, Mar 2026)
+  - ~30 tests in `test_regression_test_guard.py`
+
+- [x] **Multi-Model Review Router** (`app/quality/multi_model_review_router.py`)
+  - Change classifier: categorize diffs by type (security, logic, refactor, style, etc.)
+  - Model profile registry: capabilities, cost, latency per model
+  - Cost-aware routing: balance quality vs cost with configurable weights
+  - Complexity-based routing: simple changes → fast model, complex → capable model
+  - Domain routing: security changes → premium model
+  - Review aggregation: merge and deduplicate findings from multiple model reviews
+  - Routing analytics: track which models review what and their effectiveness
+  - Quality gate: configurable minimum model capability for change type
+  - Based on 2026 AI code review trends: multi-model architectures, system-aware review routing
+  - ~28 tests in `test_multi_model_review_router.py`
+
+- [x] **Agent Safety Evaluator** (`app/quality/agent_safety_evaluator.py`)
+  - Action classification: safe, risky, harmful, blocked
+  - 11 risk categories: data exfiltration, unauthorized access, destructive ops, privilege escalation, etc.
+  - Tool use policy enforcement: per-tool action allowlists and blocked patterns
+  - Multi-step sequence analysis: detect harmful action chains (e.g. data gathering → exfiltration)
+  - Coordinated threat detection: flag multiple risky actions in session
+  - Safety scoring: 0-1 scale with category weights
+  - Incident logging: full audit trail of safety evaluations
+  - Quality gate: configurable safety thresholds
+  - Batch evaluation across multiple agent sessions
+  - Based on AgentHarm (NeurIPS 2024) and ToolEmu (ICLR 2024)
+  - ~31 tests in `test_agent_safety_evaluator.py`
+
+### Всего best practices: 56/56 (было 52)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-52 | (см. v33) | v24-v33 |
+| 53 | Static Analysis Feedback Loop | v34 |
+| 54 | Regression Test Guard | v34 |
+| 55 | Multi-Model Review Router | v34 |
+| 56 | Agent Safety Evaluator | v34 |
+
+### Результаты тестов
+- Backend: **2663 passed** (было 2534, +129 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- Bouzenia & Pradel "Static Analysis as a Feedback Loop: Enhancing LLM-Generated Code Beyond Correctness" (arXiv:2508.14419, Aug 2025)
+- Yang et al. "ReCatcher: Towards LLMs Regression Testing for Code Generation" (arXiv:2507.19390, Jul 2025)
+- Chen et al. "Evaluating LLM-Based Test Generation Under Software Evolution" (arXiv:2603.23443, Mar 2026)
+- Terragni et al. "LLMLOOP: Iterative Feedback for Code Improvement" (ICSME 2025)
+- Andriushchenko et al. "AgentHarm: Measuring Harmfulness of LLM Agents" (NeurIPS 2024, updated 2025)
+- Ruan et al. "ToolEmu: Identifying Risks of LLM Agents with Emulated Sandbox" (ICLR 2024, updated 2025)
+- CodeRabbit 2026: Multi-model AI code review architecture with 2M+ repos
+- Qodo "Best AI Code Review Tools 2026": Multi-model review routing trends
+- Augment Code "AI Code Review in CI/CD": Diff-aware vs system-aware review
+- Maxim.ai "Semantic Caching Solutions for AI Apps in 2026"
+- Singapore IMDA "Starter Kit for Testing LLM-Based Applications for Safety and Reliability" (2026)
+
+---
+
 ## Ревизия на 2026-03-28 v33 (автоматический проход; 52 best practices + efficiency analyzer + output grounding + agent memory + review scorer + 2534 tests)
 
 Проверено командами:

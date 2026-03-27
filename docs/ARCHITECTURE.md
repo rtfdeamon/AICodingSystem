@@ -16,7 +16,7 @@ backend/app/
 ├── middleware/       # Cross-cutting concerns
 ├── models/          # Database models
 ├── observability/   # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, audit trail, cost tracking, LLM judge
-├── quality/         # PII, hallucination, prompt versioning, injection guard, diff scanner, cache, context mgmt, schema validation, attribution, guardrail orchestrator, sensitive zone policy, self-correction, AST validator, CI feedback loop, security prompts, agent resilience
+├── quality/         # PII, hallucination, prompt versioning, injection guard, diff scanner, cache, context mgmt, schema validation, attribution, guardrail orchestrator, sensitive zone policy, self-correction, AST validator, CI feedback loop, security prompts, agent resilience, SA feedback loop, regression guard, multi-model review router, agent safety evaluator
 ├── schemas/         # Request/response validation
 ├── services/        # Business logic layer
 └── workflows/       # Pipeline orchestration
