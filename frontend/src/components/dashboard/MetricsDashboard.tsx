@@ -14,6 +14,7 @@ import { clsx } from 'clsx';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import * as dashboardApi from '@/api/dashboard';
+import { useKanbanStore } from '@/stores/kanbanStore';
 
 type ActiveTab = 'overview' | 'pipeline' | 'ai_costs' | 'quality' | 'deployments';
 
@@ -31,13 +32,11 @@ function formatHours(hours: number): string {
   return `${(hours / 24).toFixed(1)}d`;
 }
 
-// Default project ID — in production this would come from project selector
-const DEFAULT_PROJECT_ID = 'default';
-
 export function MetricsDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currentProjectId = useKanbanStore((s) => s.currentProjectId);
 
   const [pipelineData, setPipelineData] = useState<dashboardApi.PipelineStatsResponse | null>(null);
   const [aiCostData, setAiCostData] = useState<dashboardApi.AiCostsResponse | null>(null);
@@ -45,9 +44,14 @@ export function MetricsDashboard() {
   const [deployData, setDeployData] = useState<dashboardApi.DeploymentStatsResponse | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!currentProjectId) {
+      setError('No project selected. Please open the Board first to create or select a project.');
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
-    const params = { project_id: DEFAULT_PROJECT_ID };
+    const params = { project_id: currentProjectId };
     try {
       const [pipeline, aiCosts, quality, deploys] = await Promise.all([
         dashboardApi.pipelineStats(params),
@@ -67,7 +71,7 @@ export function MetricsDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentProjectId]);
 
   useEffect(() => {
     fetchData();

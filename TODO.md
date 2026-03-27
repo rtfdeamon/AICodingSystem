@@ -1,5 +1,46 @@
 # TODO
 
+## Ревизия на 2026-03-27 v19 (автоматический проход; 899 backend tests + 138 frontend tests + artifact API wiring + DEFAULT_PROJECT_ID fix + GAP closure)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **899 passed, 0 warnings**
+- `backend/.venv/bin/pytest --cov=backend/app --cov-report=term -q` -> **TOTAL 96%**
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed** (было 98, +40 новых тестов)
+- `frontend: npm run build` -> **OK**
+
+### Что сделано в этом проходе
+
+- [x] **Убран DEFAULT_PROJECT_ID='default' из MetricsDashboard**
+  - MetricsDashboard теперь использует `kanbanStore.currentProjectId` (реальный UUID)
+  - Добавлена проверка: если нет выбранного проекта — показывает сообщение "No project selected"
+  - Тест `MetricsDashboard.test.tsx` верифицирует: никогда не отправляется `project_id='default'`
+
+- [x] **Подключены все вкладки TicketDetail к реальным API**
+  - Создан `api/ticketHistory.ts` — клиент для `GET /tickets/{id}/history`
+  - Добавлены fetch-методы в `ticketStore`: `fetchPlans`, `fetchAiLogs`, `fetchTestResults`, `fetchReviews`, `fetchHistory`
+  - TicketDetail теперь при переключении вкладки вызывает соответствующий fetch
+  - Удалены устаревшие "pending" комментарии из `api/plans.ts`
+
+- [x] **Установлен Playwright chromium для E2E**
+  - `npx playwright install chromium` — установлен Chrome Headless Shell v145
+
+- [x] **Frontend тесты: 98 → 138 (+40 новых)**
+  - `KanbanBoard.test.tsx`: 9 тестов — project init, WebSocket subscription, columns, error state, auto-create
+  - `TicketDetail.test.tsx`: 23 теста — mount/unmount, tabs, artifact fetch, plan/code/tests/ai_logs content
+  - `MetricsDashboard.test.tsx`: 8 тестов — project_id verification, metrics rendering, error state
+  - Исправлен TS error в `Badge.test.tsx` (unused variable)
+
+- [x] **GAP_ANALYSIS.md обновлён — все 8 P0/P1/P2 gaps закрыты**
+
+### Что осталось открытым (backlog)
+
+1. [ ] **Advanced features**: Three-layer review architecture, CI feedback loops, AI-on-AI reviews
+2. [ ] **Code splitting**: Frontend bundle >500KB — add dynamic import() for route-level splitting
+3. [ ] **Project selector**: Add explicit project picker UI (currently auto-selects first project)
+
+---
+
 ## Ревизия на 2026-03-27 v18 (автоматический проход; 899 tests + 98 frontend tests + WebSocket + AI review grounding + E2E + component tests)
 
 Проверено командами:

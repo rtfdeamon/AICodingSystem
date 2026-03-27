@@ -67,6 +67,10 @@ export function TicketDetail() {
     error,
     fetchTicket,
     fetchAttachments,
+    fetchPlans,
+    fetchAiLogs,
+    fetchTestResults,
+    fetchHistory,
     reset,
   } = useTicketStore();
 
@@ -80,10 +84,25 @@ export function TicketDetail() {
   }, [id, fetchTicket, reset]);
 
   useEffect(() => {
-    if (id && activeTab === 'attachments') {
-      fetchAttachments(id);
+    if (!id) return;
+    switch (activeTab) {
+      case 'attachments':
+        fetchAttachments(id);
+        break;
+      case 'plan':
+        fetchPlans(id);
+        break;
+      case 'ai_logs':
+        fetchAiLogs(id);
+        break;
+      case 'tests':
+        fetchTestResults(id);
+        break;
+      case 'history':
+        fetchHistory(id);
+        break;
     }
-  }, [id, activeTab, fetchAttachments]);
+  }, [id, activeTab, fetchAttachments, fetchPlans, fetchAiLogs, fetchTestResults, fetchHistory]);
 
   if (isLoading || !ticket) {
     return (

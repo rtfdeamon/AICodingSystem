@@ -12,6 +12,11 @@ import type {
 import { getTicket } from '@/api/tickets';
 import { listComments } from '@/api/comments';
 import { type Attachment, listAttachments } from '@/api/attachments';
+import { getPlans } from '@/api/plans';
+import * as aiLogsApi from '@/api/aiLogs';
+import * as testResultsApi from '@/api/testResults';
+import { getReviews } from '@/api/reviews';
+import { listHistory } from '@/api/ticketHistory';
 
 interface TicketDetailState {
   currentTicket: Ticket | null;
@@ -29,6 +34,11 @@ interface TicketDetailState {
   fetchTicket: (id: string) => Promise<void>;
   fetchComments: (ticketId: string) => Promise<void>;
   fetchAttachments: (ticketId: string) => Promise<void>;
+  fetchPlans: (ticketId: string) => Promise<void>;
+  fetchAiLogs: (ticketId: string) => Promise<void>;
+  fetchTestResults: (ticketId: string) => Promise<void>;
+  fetchReviews: (ticketId: string) => Promise<void>;
+  fetchHistory: (ticketId: string) => Promise<void>;
   setCurrentTicket: (ticket: Ticket | null) => void;
   addComment: (comment: Comment) => void;
   updateComment: (comment: Comment) => void;
@@ -89,6 +99,65 @@ export const useTicketStore = create<TicketDetailState>((set) => ({
       set({ attachments: items });
     } catch {
       // silent failure for attachments
+    }
+  },
+
+  fetchPlans: async (ticketId) => {
+    try {
+      const plans = await getPlans(ticketId);
+      set({ plans });
+    } catch {
+      // silent failure — plans may not exist yet
+    }
+  },
+
+  fetchAiLogs: async (ticketId) => {
+    try {
+      const res = await aiLogsApi.list({ ticket_id: ticketId });
+      const logs: AiLog[] = res.items.map((entry) => ({
+        id: entry.id,
+        ticket_id: entry.ticket_id,
+        agent_name: entry.agent,
+        action_type: entry.action,
+        model_id: entry.model,
+        prompt_tokens: entry.input_tokens,
+        completion_tokens: entry.output_tokens,
+        cost_usd: entry.cost_usd,
+        latency_ms: entry.duration_ms,
+        status: entry.status as AiLog['status'],
+        error_message: entry.error_message,
+        created_at: entry.created_at,
+      }));
+      set({ aiLogs: logs });
+    } catch {
+      // silent failure
+    }
+  },
+
+  fetchTestResults: async (ticketId) => {
+    try {
+      const results = await testResultsApi.list(ticketId);
+      set({ testResults: results });
+    } catch {
+      // silent failure
+    }
+  },
+
+  fetchReviews: async (ticketId) => {
+    try {
+      const reviews = await getReviews(ticketId);
+      set({ reviews });
+    } catch {
+      // silent failure
+    }
+  },
+
+  fetchHistory: async (ticketId) => {
+    try {
+      const history = await listHistory(ticketId);
+      set({ history });
+    } catch {
+      // silent failure
     }
   },
 

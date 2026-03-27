@@ -76,7 +76,7 @@ Stages marked with `*` are human gates requiring explicit approval.
 │       ├── api/               # Axios API client modules
 │       ├── stores/            # Zustand state management
 │       ├── hooks/             # Custom React hooks
-│       └── test/              # 54 Vitest tests
+│       └── test/              # 138 Vitest tests
 ├── infra/                      # Infrastructure
 │   ├── docker-compose.yml     # Full stack: PG, Redis, n8n, Nginx
 │   ├── k8s/                   # Kubernetes manifests
@@ -212,7 +212,7 @@ cd backend
 
 ```bash
 cd frontend
-npx vitest run       # Run 98 tests
+npx vitest run       # Run 138 tests
 npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
@@ -222,7 +222,7 @@ npm run build        # TypeScript build check
 | Component | Tests | Coverage |
 |-----------|-------|----------|
 | Backend | 899 | 96% |
-| Frontend | 98 | - |
+| Frontend | 138 | - |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |

@@ -44,7 +44,7 @@ describe('Badge', () => {
   });
 
   it('shows dot indicator when dot=true', () => {
-    const { container } = render(<Badge dot>With Dot</Badge>);
+    render(<Badge dot>With Dot</Badge>);
     const badge = screen.getByText('With Dot');
     // The dot is a span inside the badge with rounded-full and bg-current
     const dot = badge.querySelector('span.rounded-full');
