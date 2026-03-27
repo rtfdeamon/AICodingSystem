@@ -1,0 +1,433 @@
+{
+  "name": "Canary Deployment Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deploy-canary",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-deploy-canary",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "deploy-canary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "environment",
+              "value": "={{ $json.body.environment }}"
+            },
+            {
+              "name": "deploy_type",
+              "value": "canary"
+            },
+            {
+              "name": "canary_pct",
+              "value": 5
+            },
+            {
+              "name": "commit_sha",
+              "value": "={{ $json.body.commit_sha }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "deploy-5pct",
+      "name": "Deploy at 5%",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "wait-5pct",
+      "name": "Wait 5 Minutes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}/health",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "health-check-5pct",
+      "name": "Health Check (5%)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.healthy }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "healthy-5pct",
+      "name": "Healthy at 5%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "canary_pct",
+              "value": 25
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "promote-25pct",
+      "name": "Promote to 25%",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1350, 200]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "wait-25pct",
+      "name": "Wait 5 Minutes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1550, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}/health",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "health-check-25pct",
+      "name": "Health Check (25%)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1750, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.healthy }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "healthy-25pct",
+      "name": "Healthy at 25%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1950, 200]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "canary_pct",
+              "value": 50
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "promote-50pct",
+      "name": "Promote to 50%",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2200, 100]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "wait-50pct",
+      "name": "Wait 5 Minutes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2400, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}/health",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "health-check-50pct",
+      "name": "Health Check (50%)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2600, 100]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.healthy }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "healthy-50pct",
+      "name": "Healthy at 50%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2800, 100]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "canary_pct",
+              "value": 100
+            },
+            {
+              "name": "status",
+              "value": "deployed"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "promote-100pct",
+      "name": "Promote to 100%",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [3050, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/deploy-callback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "deployment_id",
+              "value": "={{ $json.deployment_id }}"
+            },
+            {
+              "name": "status",
+              "value": "deployed"
+            },
+            {
+              "name": "canary_pct",
+              "value": 100
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "success-callback",
+      "name": "Success Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [3250, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/deployments/{{ $json.deployment_id }}/rollback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "reason",
+              "value": "Canary health check failed"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "rollback",
+      "name": "Rollback Deployment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1550, 550]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/deploy-callback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "deployment_id",
+              "value": "={{ $json.deployment_id }}"
+            },
+            {
+              "name": "status",
+              "value": "rolled_back"
+            },
+            {
+              "name": "reason",
+              "value": "Canary health check failed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rollback-callback",
+      "name": "Rollback Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1800, 550]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{ "node": "Deploy at 5%", "type": "main", "index": 0 }]
+      ]
+    },
+    "Deploy at 5%": {
+      "main": [
+        [{ "node": "Wait 5 Minutes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 5 Minutes": {
+      "main": [
+        [{ "node": "Health Check (5%)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Health Check (5%)": {
+      "main": [
+        [{ "node": "Healthy at 5%?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Healthy at 5%?": {
+      "main": [
+        [{ "node": "Promote to 25%", "type": "main", "index": 0 }],
+        [{ "node": "Rollback Deployment", "type": "main", "index": 0 }]
+      ]
+    },
+    "Promote to 25%": {
+      "main": [
+        [{ "node": "Wait 5 Minutes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Health Check (25%)": {
+      "main": [
+        [{ "node": "Healthy at 25%?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Healthy at 25%?": {
+      "main": [
+        [{ "node": "Promote to 50%", "type": "main", "index": 0 }],
+        [{ "node": "Rollback Deployment", "type": "main", "index": 0 }]
+      ]
+    },
+    "Promote to 50%": {
+      "main": [
+        [{ "node": "Wait 5 Minutes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Health Check (50%)": {
+      "main": [
+        [{ "node": "Healthy at 50%?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Healthy at 50%?": {
+      "main": [
+        [{ "node": "Promote to 100%", "type": "main", "index": 0 }],
+        [{ "node": "Rollback Deployment", "type": "main", "index": 0 }]
+      ]
+    },
+    "Promote to 100%": {
+      "main": [
+        [{ "node": "Success Callback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Rollback Deployment": {
+      "main": [
+        [{ "node": "Rollback Callback", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ai-pipeline" },
+    { "name": "deployment" },
+    { "name": "canary" }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

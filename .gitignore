@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+frontend/dist/
+*.tsbuildinfo
+
+# Docker
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+
+# Alembic
+backend/alembic/versions/__pycache__/
+
+# Workdir for cloned repos
+workdir/
+
+# Runtime uploads (should use object storage in production)
+backend/uploads/
+
+# Docs (keep spec)
+!TZ_AI_Coding_Pipeline.docx
+
+# SQLite dev database
+*.db

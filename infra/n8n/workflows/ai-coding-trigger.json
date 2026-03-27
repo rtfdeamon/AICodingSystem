@@ -1,0 +1,302 @@
+{
+  "name": "AI Coding Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-coding",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-ai-coding",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "ai-coding"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/tickets/{{ $json.body.ticket_id }}/plan",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-plan",
+      "name": "Fetch Plan & Subtasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "subtasks",
+        "options": {
+          "destinationFieldName": "subtask",
+          "include": "allOtherFields"
+        }
+      },
+      "id": "split-subtasks",
+      "name": "Split Into Subtasks",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/tickets/{{ $json.body.ticket_id }}/code-gen",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "plan_id",
+              "value": "={{ $json.body.plan_id }}"
+            },
+            {
+              "name": "subtask_index",
+              "value": "={{ $json.subtask.index }}"
+            },
+            {
+              "name": "subtask_title",
+              "value": "={{ $json.subtask.title }}"
+            },
+            {
+              "name": "subtask_description",
+              "value": "={{ $json.subtask.description }}"
+            },
+            {
+              "name": "affected_files",
+              "value": "={{ JSON.stringify($json.subtask.affected_files) }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 600000,
+          "retry": {
+            "maxRetries": 2,
+            "retryInterval": 10000
+          }
+        }
+      },
+      "id": "execute-subtask",
+      "name": "Execute Subtask Code Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [950, 300]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      },
+      "id": "wait-subtask",
+      "name": "Wait for Subtask",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1150, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/code-generations/{{ $json.code_generation_id }}/status",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "check-subtask-status",
+      "name": "Check Subtask Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1350, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equals",
+              "value2": "completed"
+            }
+          ]
+        }
+      },
+      "id": "check-completed",
+      "name": "Is Subtask Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1550, 300]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1750, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/tickets/{{ $json.body.ticket_id }}/move",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to_column",
+              "value": "code_review"
+            },
+            {
+              "name": "comment",
+              "value": "All subtasks completed. Code is ready for review."
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "move-to-code-review",
+      "name": "Move to Code Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1950, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/notify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "event",
+              "value": "coding_complete"
+            },
+            {
+              "name": "channel",
+              "value": "in_app"
+            },
+            {
+              "name": "message",
+              "value": "AI coding completed for all subtasks"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-coding-complete",
+      "name": "Notify Coding Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2150, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/pipeline-error",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "pipeline",
+              "value": "ai_coding"
+            },
+            {
+              "name": "subtask_index",
+              "value": "={{ $json.subtask.index }}"
+            },
+            {
+              "name": "error",
+              "value": "Subtask failed after retries"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "subtask-failed",
+      "name": "Handle Subtask Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1750, 450]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{ "node": "Fetch Plan & Subtasks", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Plan & Subtasks": {
+      "main": [
+        [{ "node": "Split Into Subtasks", "type": "main", "index": 0 }]
+      ]
+    },
+    "Split Into Subtasks": {
+      "main": [
+        [{ "node": "Execute Subtask Code Gen", "type": "main", "index": 0 }]
+      ]
+    },
+    "Execute Subtask Code Gen": {
+      "main": [
+        [{ "node": "Wait for Subtask", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Subtask": {
+      "main": [
+        [{ "node": "Check Subtask Status", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Subtask Status": {
+      "main": [
+        [{ "node": "Is Subtask Complete?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Subtask Complete?": {
+      "main": [
+        [{ "node": "Aggregate Results", "type": "main", "index": 0 }],
+        [{ "node": "Handle Subtask Failure", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [{ "node": "Move to Code Review", "type": "main", "index": 0 }]
+      ]
+    },
+    "Move to Code Review": {
+      "main": [
+        [{ "node": "Notify Coding Complete", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ai-pipeline" },
+    { "name": "coding" }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

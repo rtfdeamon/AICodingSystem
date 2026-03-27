@@ -1,0 +1,232 @@
+{
+  "name": "Notification Dispatch",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notify",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-notify",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "notify"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value": "slack",
+              "output": 0
+            },
+            {
+              "value": "telegram",
+              "output": 1
+            },
+            {
+              "value": "in_app",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 2,
+        "dataType": "string",
+        "value1": "={{ $json.body.channel }}"
+      },
+      "id": "switch-channel",
+      "name": "Route by Channel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SLACK_BOT_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "={{ $json.body.slack_channel || '#ai-pipeline' }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.body.message }}"
+            },
+            {
+              "name": "blocks",
+              "value": "={{ JSON.stringify([{\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": \"*\" + ($json.body.event || 'Notification') + \"*\\n\" + $json.body.message}}, {\"type\": \"context\", \"elements\": [{\"type\": \"mrkdwn\", \"text\": \"Ticket: `\" + ($json.body.ticket_id || 'N/A') + \"`\"}]}]) }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-slack",
+      "name": "Send Slack Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [800, 150]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.body.telegram_chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ '🔔 ' + ($json.body.event || 'Notification') + '\\n\\n' + $json.body.message + '\\n\\nTicket: ' + ($json.body.ticket_id || 'N/A') }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "HTML"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-telegram",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/notifications",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "user_id",
+              "value": "={{ $json.body.user_id }}"
+            },
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "channel",
+              "value": "in_app"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.body.event || 'Pipeline Notification' }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.body.message }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-in-app",
+      "name": "Send In-App Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [800, 450]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/notification-callback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.body.channel }}"
+            },
+            {
+              "name": "status",
+              "value": "sent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "delivery-callback",
+      "name": "Delivery Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{ "node": "Route by Channel", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route by Channel": {
+      "main": [
+        [{ "node": "Send Slack Message", "type": "main", "index": 0 }],
+        [{ "node": "Send Telegram Message", "type": "main", "index": 0 }],
+        [{ "node": "Send In-App Notification", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Slack Message": {
+      "main": [
+        [{ "node": "Delivery Callback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Telegram Message": {
+      "main": [
+        [{ "node": "Delivery Callback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send In-App Notification": {
+      "main": [
+        [{ "node": "Delivery Callback", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ai-pipeline" },
+    { "name": "notifications" }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

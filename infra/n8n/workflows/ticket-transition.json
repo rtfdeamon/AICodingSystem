@@ -1,0 +1,283 @@
+{
+  "name": "Ticket Transition Dispatcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ticket-transition",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "ticket-transition"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value": "ai_planning",
+              "output": 0
+            },
+            {
+              "value": "ai_coding",
+              "output": 1
+            },
+            {
+              "value": "staging",
+              "output": 2
+            },
+            {
+              "value": "production",
+              "output": 3
+            },
+            {
+              "value": "code_review",
+              "output": 4
+            }
+          ]
+        },
+        "fallbackOutput": 5,
+        "dataType": "string",
+        "value1": "={{ $json.body.to_column }}"
+      },
+      "id": "switch-transition-type",
+      "name": "Route by Transition",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/ai-planning",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "project_id",
+              "value": "={{ $json.body.project_id }}"
+            },
+            {
+              "name": "triggered_by",
+              "value": "={{ $json.body.actor_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "trigger-ai-planning",
+      "name": "Trigger AI Planning",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/ai-coding",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "project_id",
+              "value": "={{ $json.body.project_id }}"
+            },
+            {
+              "name": "plan_id",
+              "value": "={{ $json.body.plan_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "trigger-ai-coding",
+      "name": "Trigger AI Coding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 250]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/build-test",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "project_id",
+              "value": "={{ $json.body.project_id }}"
+            },
+            {
+              "name": "commit_sha",
+              "value": "={{ $json.body.commit_sha }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "trigger-build-test",
+      "name": "Trigger Build & Test",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/deploy-canary",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "project_id",
+              "value": "={{ $json.body.project_id }}"
+            },
+            {
+              "name": "commit_sha",
+              "value": "={{ $json.body.commit_sha }}"
+            },
+            {
+              "name": "environment",
+              "value": "production"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "trigger-deploy-canary",
+      "name": "Trigger Canary Deploy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 550]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/notify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "event",
+              "value": "code_review_ready"
+            },
+            {
+              "name": "channel",
+              "value": "in_app"
+            },
+            {
+              "name": "message",
+              "value": "Ticket is ready for code review"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "notify-code-review",
+      "name": "Notify Code Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/transition-callback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "to_column",
+              "value": "={{ $json.body.to_column }}"
+            },
+            {
+              "name": "status",
+              "value": "unhandled"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fallback-callback",
+      "name": "Fallback Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [750, 850]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route by Transition",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Transition": {
+      "main": [
+        [{ "node": "Trigger AI Planning", "type": "main", "index": 0 }],
+        [{ "node": "Trigger AI Coding", "type": "main", "index": 0 }],
+        [{ "node": "Trigger Build & Test", "type": "main", "index": 0 }],
+        [{ "node": "Trigger Canary Deploy", "type": "main", "index": 0 }],
+        [{ "node": "Notify Code Review", "type": "main", "index": 0 }],
+        [{ "node": "Fallback Callback", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ai-pipeline" },
+    { "name": "dispatcher" }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

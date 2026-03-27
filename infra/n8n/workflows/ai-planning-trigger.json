@@ -1,0 +1,274 @@
+{
+  "name": "AI Planning Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-planning",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-ai-planning",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "ai-planning"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/projects/{{ $json.body.project_id }}/git/clone",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "maxRetries": 2,
+            "retryInterval": 5000
+          }
+        }
+      },
+      "id": "clone-repo",
+      "name": "Clone Repository",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "id": "wait-clone",
+      "name": "Wait for Clone",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/projects/{{ $json.body.project_id }}/context/index",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "full_reindex",
+              "value": false
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000,
+          "retry": {
+            "maxRetries": 2,
+            "retryInterval": 10000
+          }
+        }
+      },
+      "id": "trigger-indexing",
+      "name": "Trigger Context Indexing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-indexing",
+      "name": "Wait for Indexing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/projects/{{ $json.body.project_id }}/tickets/{{ $json.body.ticket_id }}/generate-plan",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "triggered_by",
+              "value": "={{ $json.body.triggered_by }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 600000,
+          "retry": {
+            "maxRetries": 1,
+            "retryInterval": 15000
+          }
+        }
+      },
+      "id": "generate-plan",
+      "name": "Generate AI Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/tickets/{{ $json.body.ticket_id }}/move",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to_column",
+              "value": "plan_review"
+            },
+            {
+              "name": "comment",
+              "value": "AI planning completed. Plan is ready for review."
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "move-to-plan-review",
+      "name": "Move to Plan Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/webhook/notify",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "event",
+              "value": "plan_ready"
+            },
+            {
+              "name": "channel",
+              "value": "in_app"
+            },
+            {
+              "name": "message",
+              "value": "AI plan generated and ready for review"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-plan-ready",
+      "name": "Notify Plan Ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1700, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/pipeline-error",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "pipeline",
+              "value": "ai_planning"
+            },
+            {
+              "name": "error",
+              "value": "={{ $json.error.message }}"
+            },
+            {
+              "name": "node",
+              "value": "={{ $json.error.node }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "error-handler",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 550]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{ "node": "Clone Repository", "type": "main", "index": 0 }]
+      ]
+    },
+    "Clone Repository": {
+      "main": [
+        [{ "node": "Wait for Clone", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Clone": {
+      "main": [
+        [{ "node": "Trigger Context Indexing", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Context Indexing": {
+      "main": [
+        [{ "node": "Wait for Indexing", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Indexing": {
+      "main": [
+        [{ "node": "Generate AI Plan", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate AI Plan": {
+      "main": [
+        [{ "node": "Move to Plan Review", "type": "main", "index": 0 }]
+      ]
+    },
+    "Move to Plan Review": {
+      "main": [
+        [{ "node": "Notify Plan Ready", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ai-pipeline" },
+    { "name": "planning" }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

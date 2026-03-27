@@ -1,0 +1,214 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Tickets Per Column",
+      "type": "barchart",
+      "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT column_name AS metric, COUNT(*) AS value FROM tickets WHERE project_id = '$project_id' GROUP BY column_name ORDER BY CASE column_name WHEN 'backlog' THEN 1 WHEN 'ai_planning' THEN 2 WHEN 'plan_review' THEN 3 WHEN 'ai_coding' THEN 4 WHEN 'code_review' THEN 5 WHEN 'staging' THEN 6 WHEN 'staging_verification' THEN 7 WHEN 'production' THEN 8 END",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always",
+        "barWidth": 0.7
+      }
+    },
+    {
+      "title": "Cycle Time by Column (hours)",
+      "type": "barchart",
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT th1.to_column AS metric, AVG(EXTRACT(EPOCH FROM (th2.created_at - th1.created_at)) / 3600) AS value FROM ticket_history th1 JOIN ticket_history th2 ON th1.ticket_id = th2.ticket_id AND th2.from_column = th1.to_column JOIN tickets t ON t.id = th1.ticket_id WHERE t.project_id = '$project_id' AND th1.created_at >= NOW() - INTERVAL '30 days' GROUP BY th1.to_column ORDER BY CASE th1.to_column WHEN 'backlog' THEN 1 WHEN 'ai_planning' THEN 2 WHEN 'plan_review' THEN 3 WHEN 'ai_coding' THEN 4 WHEN 'code_review' THEN 5 WHEN 'staging' THEN 6 WHEN 'staging_verification' THEN 7 WHEN 'production' THEN 8 END",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always"
+      }
+    },
+    {
+      "title": "Throughput — Tickets Completed Per Week",
+      "type": "timeseries",
+      "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT DATE_TRUNC('week', th.created_at) AS time, COUNT(DISTINCT th.ticket_id) AS value FROM ticket_history th JOIN tickets t ON t.id = th.ticket_id WHERE th.to_column = 'production' AND t.project_id = '$project_id' AND th.created_at >= NOW() - INTERVAL '90 days' GROUP BY DATE_TRUNC('week', th.created_at) ORDER BY time",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "lineWidth": 1
+          }
+        }
+      }
+    },
+    {
+      "title": "Review Rejection Rate",
+      "type": "timeseries",
+      "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT DATE_TRUNC('week', r.created_at) AS time, ROUND(SUM(CASE WHEN r.decision IN ('rejected', 'changes_requested') THEN 1 ELSE 0 END)::numeric / NULLIF(COUNT(*), 0) * 100, 1) AS value FROM reviews r JOIN tickets t ON t.id = r.ticket_id WHERE t.project_id = '$project_id' AND r.created_at >= NOW() - INTERVAL '90 days' GROUP BY DATE_TRUNC('week', r.created_at) ORDER BY time",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m])) by (status)",
+          "legendFormat": "HTTP {{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        }
+      }
+    },
+    {
+      "title": "P50 / P95 / P99 Latency",
+      "type": "timeseries",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P99",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineWidth": 2
+          }
+        }
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["pipeline", "overview"],
+  "templating": {
+    "list": [
+      {
+        "name": "project_id",
+        "type": "textbox",
+        "label": "Project ID",
+        "current": { "value": "" },
+        "options": []
+      }
+    ]
+  },
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AI Coding Pipeline — Overview",
+  "uid": "pipeline-overview",
+  "version": 1
+}

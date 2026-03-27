@@ -1,0 +1,9 @@
+# Root-level pyproject.toml — keeps repo-root pytest discovery pointed at
+# the backend test suite.
+#
+# This file does NOT define a Python project; it only configures tools.
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]

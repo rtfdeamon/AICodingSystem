@@ -1,0 +1,332 @@
+{
+  "name": "Build and Test Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "build-test",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-build-test",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "build-test"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/ci/{{ $json.body.project_id }}/build",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "commit_sha",
+              "value": "={{ $json.body.commit_sha }}"
+            },
+            {
+              "name": "branch",
+              "value": "={{ $json.body.branch_name }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000,
+          "retry": {
+            "maxRetries": 1,
+            "retryInterval": 10000
+          }
+        }
+      },
+      "id": "trigger-build",
+      "name": "Trigger Build",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-build",
+      "name": "Wait for Build",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/ci/builds/{{ $json.build_id }}/status",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "check-build-status",
+      "name": "Check Build Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equals",
+              "value2": "success"
+            }
+          ]
+        }
+      },
+      "id": "build-passed",
+      "name": "Build Passed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/ci/{{ $json.body.project_id }}/test",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "commit_sha",
+              "value": "={{ $json.body.commit_sha }}"
+            },
+            {
+              "name": "test_types",
+              "value": "[\"unit\", \"integration\", \"e2e\"]"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 600000,
+          "retry": {
+            "maxRetries": 1,
+            "retryInterval": 10000
+          }
+        }
+      },
+      "id": "trigger-tests",
+      "name": "Trigger Tests",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1350, 200]
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "wait-tests",
+      "name": "Wait for Tests",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1550, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/ci/{{ $json.body.project_id }}/security-scan",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "commit_sha",
+              "value": "={{ $json.body.commit_sha }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "trigger-security-scan",
+      "name": "Trigger Security Scan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1750, 200]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-security",
+      "name": "Wait for Security Scan",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1950, 200]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "mergeByFields": {},
+        "options": {},
+        "output": "={{ { test_results: $('Trigger Tests').item.json, security_results: $('Trigger Security Scan').item.json, build_id: $('Trigger Build').item.json.build_id, ticket_id: $json.body.ticket_id, all_passed: $('Trigger Tests').item.json.passed && $('Trigger Security Scan').item.json.passed } }}"
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [2150, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/build-test-callback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "build_passed",
+              "value": true
+            },
+            {
+              "name": "tests_passed",
+              "value": "={{ $json.all_passed }}"
+            },
+            {
+              "name": "test_results",
+              "value": "={{ JSON.stringify($json.test_results) }}"
+            },
+            {
+              "name": "security_results",
+              "value": "={{ JSON.stringify($json.security_results) }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "callback-results",
+      "name": "Callback with Results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2350, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/api/v1/webhooks/build-test-callback",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $json.body.ticket_id }}"
+            },
+            {
+              "name": "build_passed",
+              "value": false
+            },
+            {
+              "name": "error",
+              "value": "Build failed"
+            },
+            {
+              "name": "build_log",
+              "value": "={{ $json.log_url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "build-failed-callback",
+      "name": "Build Failed Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1350, 450]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [{ "node": "Trigger Build", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Build": {
+      "main": [
+        [{ "node": "Wait for Build", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Build": {
+      "main": [
+        [{ "node": "Check Build Status", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Build Status": {
+      "main": [
+        [{ "node": "Build Passed?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Passed?": {
+      "main": [
+        [{ "node": "Trigger Tests", "type": "main", "index": 0 }],
+        [{ "node": "Build Failed Callback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Tests": {
+      "main": [
+        [{ "node": "Wait for Tests", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Tests": {
+      "main": [
+        [{ "node": "Trigger Security Scan", "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger Security Scan": {
+      "main": [
+        [{ "node": "Wait for Security Scan", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait for Security Scan": {
+      "main": [
+        [{ "node": "Aggregate Results", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [{ "node": "Callback with Results", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "ai-pipeline" },
+    { "name": "ci-cd" }
+  ],
+  "triggerCount": 1,
+  "active": true
+}

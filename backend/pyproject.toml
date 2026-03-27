@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-coding-pipeline"
+version = "0.1.0"
+description = "AI-Driven Coding Pipeline — FastAPI backend"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "AI Coding Team" }]
+
+dependencies = [
+    # Web framework
+    "fastapi[standard]>=0.115,<1",
+    "uvicorn[standard]>=0.32,<1",
+    # Database
+    "sqlalchemy[asyncio]>=2.0,<3",
+    "asyncpg>=0.30,<1",
+    "alembic>=1.14,<2",
+    # Settings & validation
+    "pydantic>=2.10,<3",
+    "pydantic-settings>=2.7,<3",
+    "email-validator>=2.2,<3",
+    # Auth
+    "python-jose[cryptography]>=3.3,<4",
+    "passlib[bcrypt]>=1.7,<2",
+    "python-multipart>=0.0.18",
+    # Redis
+    "redis[hiredis]>=5.2,<6",
+    # HTTP client
+    "httpx>=0.28,<1",
+    # AI SDKs
+    "anthropic>=0.42,<1",
+    "openai>=1.59,<2",
+    "google-generativeai>=0.8,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=0.25,<1",
+    "pytest-cov>=6.0,<7",
+    "httpx>=0.28,<1",
+    "ruff>=0.9,<1",
+    "mypy>=1.14,<2",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "S",   # flake8-bandit
+    "T20", # flake8-print
+    "SIM", # flake8-simplify
+    "PLW", # pylint warnings
+]
+ignore = [
+    "S101",  # assert used in tests
+    "S105",  # possible hardcoded password (false positives on defaults)
+    "B008",  # function call in default argument (needed for Depends())
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]

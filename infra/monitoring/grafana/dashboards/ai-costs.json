@@ -1,0 +1,275 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Total AI Cost (USD)",
+      "type": "stat",
+      "id": 1,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(SUM(cost_usd), 0) AS value FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range'",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 200 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "textMode": "value",
+        "colorMode": "background"
+      }
+    },
+    {
+      "title": "Total Tokens Used",
+      "type": "stat",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(SUM(prompt_tokens + completion_tokens), 0) AS value FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range'",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "purple", "value": 1000000 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "textMode": "value"
+      }
+    },
+    {
+      "title": "Avg Cost Per Ticket",
+      "type": "stat",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(AVG(ticket_cost), 0) AS value FROM (SELECT al.ticket_id, SUM(al.cost_usd) AS ticket_cost FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range' GROUP BY al.ticket_id) sub",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 2 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      }
+    },
+    {
+      "title": "AI Calls Count",
+      "type": "stat",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range'",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      }
+    },
+    {
+      "title": "Cost Per Agent",
+      "type": "piechart",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT al.agent_name AS metric, SUM(al.cost_usd) AS value FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range' GROUP BY al.agent_name ORDER BY value DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": {
+        "pieType": "donut",
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] }
+      }
+    },
+    {
+      "title": "Tokens Per Day",
+      "type": "timeseries",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT DATE_TRUNC('day', al.created_at) AS time, SUM(al.prompt_tokens) AS \"Prompt Tokens\", SUM(al.completion_tokens) AS \"Completion Tokens\" FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range' GROUP BY DATE_TRUNC('day', al.created_at) ORDER BY time",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "stacking": { "mode": "normal" }
+          }
+        }
+      }
+    },
+    {
+      "title": "Cost Per Day",
+      "type": "timeseries",
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT DATE_TRUNC('day', al.created_at) AS time, SUM(al.cost_usd) AS value FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range' GROUP BY DATE_TRUNC('day', al.created_at) ORDER BY time",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "lineWidth": 1
+          }
+        }
+      }
+    },
+    {
+      "title": "Cost Per Ticket (Top 20)",
+      "type": "barchart",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT CONCAT('#', t.ticket_number, ': ', LEFT(t.title, 30)) AS metric, SUM(al.cost_usd) AS value FROM ai_logs al JOIN tickets t ON t.id = al.ticket_id WHERE t.project_id = '$project_id' AND al.created_at >= NOW() - INTERVAL '$time_range' GROUP BY t.ticket_number, t.title ORDER BY value DESC LIMIT 20",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always",
+        "barWidth": 0.6
+      }
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["ai", "costs"],
+  "templating": {
+    "list": [
+      {
+        "name": "project_id",
+        "type": "textbox",
+        "label": "Project ID",
+        "current": { "value": "" },
+        "options": []
+      },
+      {
+        "name": "time_range",
+        "type": "custom",
+        "label": "Time Range",
+        "current": { "value": "30 days", "text": "30 days" },
+        "options": [
+          { "text": "7 days", "value": "7 days" },
+          { "text": "14 days", "value": "14 days" },
+          { "text": "30 days", "value": "30 days" },
+          { "text": "90 days", "value": "90 days" }
+        ],
+        "query": "7 days,14 days,30 days,90 days"
+      }
+    ]
+  },
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AI Coding Pipeline — AI Costs",
+  "uid": "ai-costs",
+  "version": 1
+}
