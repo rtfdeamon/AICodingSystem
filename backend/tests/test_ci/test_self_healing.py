@@ -33,7 +33,7 @@ class TestClassifyFailure:
         assert result.category == FailureCategory.SELECTOR_CHANGE
         assert result.is_healable
 
-    def test_detects_querySelector_not_found(self) -> None:
+    def test_detects_query_selector_not_found(self) -> None:
         result = classify_failure(
             "test_header",
             "querySelector('.header-nav') returned null",
@@ -48,7 +48,7 @@ class TestClassifyFailure:
         assert result.category == FailureCategory.TIMING
         assert result.is_healable
 
-    def test_detects_waitFor_timeout(self) -> None:
+    def test_detects_wait_for_timeout(self) -> None:
         result = classify_failure(
             "test_data_load",
             "waitFor callback not resolved within 5000ms",

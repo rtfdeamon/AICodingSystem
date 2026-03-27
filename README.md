@@ -54,25 +54,26 @@ Stages marked with `*` are human gates requiring explicit approval.
 | MetaReviewAgent | AI-on-AI review consolidation (3-layer review) | Claude |
 | NegotiationAgent | Proposes alternatives on developer pushback | N/A |
 | Router | Dynamic agent selection per task type | N/A |
+| ModelRouter | Cost-aware multi-model routing with circuit breakers | N/A |
 
 ## Project Structure
 
 ```
 ├── backend/                    # FastAPI backend
 │   ├── app/
-│   │   ├── agents/            # AI agent implementations (14 modules incl. negotiation)
+│   │   ├── agents/            # AI agent implementations (15 modules incl. model router)
 │   │   ├── api/v1/            # REST API routes (24 endpoints)
 │   │   ├── ci/                # CI/CD: builder, deployer, scanner, test runner, self-healing
 │   │   ├── context/           # Code embeddings, AST parser, vector store, review context
 │   │   ├── git/               # GitHub client, repo manager, diff parser
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
-│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests
-│   │   ├── quality/           # PII monitor, duplication, AI metrics, feedback
+│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection
+│   │   ├── quality/           # PII, hallucination, prompt versioning, token budget, escalation, cache
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry
-│   ├── tests/                 # 1144 tests, 96% coverage
+│   ├── tests/                 # 1425 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -248,7 +249,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 1144 tests
+.venv/bin/pytest -q                    # Run all 1425 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -263,16 +264,43 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary (v24)
+### Test Coverage Summary (v25)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 1144 | 96% |
+| Backend | 1425 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
+
+## Best Practices (20/20 Implemented)
+
+The system implements all 20 industry best practices for AI coding systems (2025-2026):
+
+| # | Practice | Module | Version |
+|---|----------|--------|---------|
+| 1 | Review Context Engine | `review_context.py` | v24 |
+| 2 | Developer Feedback Loop | `feedback_tracker.py` | v23 |
+| 3 | Negotiation Workflows | `negotiation.py` | v24 |
+| 4 | Intelligent Test Selection | `test_selector.py` | v23 |
+| 5 | Self-Healing Tests | `self_healing.py` | v24 |
+| 6 | AI Quality Metrics Dashboard | `ai_metrics.py` | v23 |
+| 7 | Duplication Detection | `duplication_detector.py` | v23 |
+| 8 | Security Scanning | `security_agent.py` | v22 |
+| 9 | OpenTelemetry Conventions | `otel_conventions.py` | v24 |
+| 10 | Agent Tracing | `agent_tracing.py` | v24 |
+| 11 | Automated Evaluation Tests | `eval_tests.py` | v24 |
+| 12 | PII Leakage Monitoring | `pii_monitor.py` | v23 |
+| 13 | Prompt Versioning | `prompt_versioning.py` | v25 |
+| 14 | Semantic Response Cache | `semantic_cache.py` | v25 |
+| 15 | Multi-Model Router | `model_router.py` | v25 |
+| 16 | Hallucination Detection | `hallucination_detector.py` | v25 |
+| 17 | Token Budget Enforcer | `token_budget.py` | v25 |
+| 18 | Shadow A/B Testing | `shadow_testing.py` | v25 |
+| 19 | Output Drift Detection | `drift_detector.py` | v25 |
+| 20 | HITL Escalation Engine | `escalation_engine.py` | v25 |
 
 ## Monitoring
 

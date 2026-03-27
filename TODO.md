@@ -1,5 +1,109 @@
 # TODO
 
+## Ревизия на 2026-03-27 v25 (автоматический проход; 20 best practices + cost optimization + hallucination detection + 1425 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1425 passed, 0 warnings** (было 1144, +281 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Prompt Versioning** (`app/quality/prompt_versioning.py`)
+  - Treats every prompt as a versioned, deployable artifact with semver
+  - Environment promotion gates: dev → staging → production
+  - Minimum eval score requirement for promotion
+  - Rollback support to previous versions
+  - Full version history per prompt name
+  - ~20 tests in `test_prompt_versioning.py`
+
+- [x] **Semantic Response Cache** (`app/quality/semantic_cache.py`)
+  - Two-layer cache: exact-match (hash) + semantic (embedding similarity)
+  - Cosine similarity with configurable threshold (default 0.92)
+  - Simple word-frequency embedding (no ML dependencies)
+  - TTL-based expiration and manual invalidation
+  - Cache stats: hit rate, avg similarity, exact/semantic/miss counts
+  - ~22 tests in `test_semantic_cache.py`
+
+- [x] **Multi-Model Router** (`app/agents/model_router.py`)
+  - Cost-aware routing: trivial → fast model, standard → mid-tier, complex → frontier
+  - Circuit breaker pattern: trips after failures, cooldown period, auto-recovery
+  - Task complexity classification based on prompt length, file count, line count
+  - Cost estimation per model with input/output token pricing
+  - Routing stats and escalation tracking
+  - ~22 tests in `test_model_router.py`
+
+- [x] **Hallucination Detection** (`app/quality/hallucination_detector.py`)
+  - Detects fabricated imports against known stdlib + PyPI packages
+  - Syntax validity check via `compile()`
+  - Variable consistency check (used before assignment)
+  - API usage validation for common fabricated patterns
+  - Composite risk score (0-100) with weighted findings
+  - Scan history and aggregate stats
+  - ~22 tests in `test_hallucination_detector.py`
+
+- [x] **Token Budget Enforcer** (`app/quality/token_budget.py`)
+  - Per-context budget limits (code review, agent task, planning, etc.)
+  - Team-level daily budget caps with alert thresholds
+  - Usage recording and cost attribution by team/feature
+  - Context compression when approaching budget limits
+  - Budget alerts at configurable utilization thresholds
+  - ~20 tests in `test_token_budget.py`
+
+- [x] **Shadow A/B Testing** (`app/observability/shadow_testing.py`)
+  - Champion vs challenger model/prompt evaluation
+  - Shadow mode: duplicate requests to challenger without user impact
+  - Manual t-test approximation for statistical significance (no scipy)
+  - Experiment lifecycle: draft → active → completed/cancelled
+  - Per-variant metrics: score, latency, cost
+  - ~20 tests in `test_shadow_testing.py`
+
+- [x] **Output Drift Detection** (`app/observability/drift_detector.py`)
+  - Behavioral baseline registration (response length, code ratio, constructs)
+  - Drift detection on sliding window with configurable thresholds
+  - Three drift types: semantic, behavioral, performance
+  - Health status: healthy/warning/degraded/critical
+  - Construct counting (try/except, type annotations, imports, classes)
+  - ~20 tests in `test_drift_detector.py`
+
+- [x] **HITL Escalation Engine** (`app/quality/escalation_engine.py`)
+  - Four-tier escalation: auto-approve, developer, senior, security review
+  - High-risk path pattern matching (/auth/, /payment/, /migrations/)
+  - Composite confidence scoring from multiple signals
+  - SLA tracking per tier (2h security, 8h senior, 24h developer)
+  - Resolution tracking and escalation stats
+  - ~22 tests in `test_escalation_engine.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все 20 best practices реализованы
+
+Все 20 рекомендаций из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py`
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py`
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py`
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py`
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py`
+6. [x] ~~**QA: AI quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py`
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning**~~ — **СДЕЛАНО v22**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py`
+10. [x] ~~**Observability: Agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py`
+11. [x] ~~**Observability: Automated eval tests**~~ — **СДЕЛАНО v24**: `eval_tests.py`
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py`
+13. [x] ~~**Prompt versioning & lifecycle**~~ — **СДЕЛАНО v25**: `prompt_versioning.py`
+14. [x] ~~**Semantic response cache**~~ — **СДЕЛАНО v25**: `semantic_cache.py`
+15. [x] ~~**Multi-model router with cost cascading**~~ — **СДЕЛАНО v25**: `model_router.py`
+16. [x] ~~**Hallucination detection pipeline**~~ — **СДЕЛАНО v25**: `hallucination_detector.py`
+17. [x] ~~**Token budget enforcer**~~ — **СДЕЛАНО v25**: `token_budget.py`
+18. [x] ~~**Shadow A/B testing**~~ — **СДЕЛАНО v25**: `shadow_testing.py`
+19. [x] ~~**Output drift detection**~~ — **СДЕЛАНО v25**: `drift_detector.py`
+20. [x] ~~**HITL escalation engine**~~ — **СДЕЛАНО v25**: `escalation_engine.py`
+
+---
+
 ## Ревизия на 2026-03-27 v24 (автоматический проход; all best practices implemented + observability + 1144 tests)
 
 Проверено командами:

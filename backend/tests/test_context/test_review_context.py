@@ -5,15 +5,14 @@ from __future__ import annotations
 import uuid
 
 from app.context.review_context import (
-    ReviewContext,
     HistoricalPR,
+    ReviewContext,
     SymbolUsage,
     build_review_context_prompt,
     extract_symbols_from_diff,
     find_symbol_usages,
     review_context_to_json,
 )
-
 
 # ── Symbol extraction from diffs ──────────────────────────────────────
 

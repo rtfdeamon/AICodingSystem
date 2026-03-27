@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import uuid
 
+import pytest
+
 from app.observability.otel_conventions import (
     GenAIAttributes,
     GenAIMetricNames,
@@ -16,8 +18,6 @@ from app.observability.otel_conventions import (
     record_span,
     spans_to_json,
 )
-
-import pytest
 
 
 @pytest.fixture(autouse=True)

@@ -53,7 +53,7 @@ class TestComputePromptHash:
 
 class TestBaselineManagement:
     def test_register_and_get_baseline(self) -> None:
-        baseline = register_baseline(
+        register_baseline(
             prompt="Review this diff",
             agent_name="review_agent",
             action="code_review",

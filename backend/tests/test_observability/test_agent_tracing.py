@@ -63,19 +63,16 @@ class TestAgentTracer:
 
     def test_trace_handles_error(self) -> None:
         tracer = AgentTracer(agent_name="test", action="test")
-        with pytest.raises(ValueError):
-            with tracer:
-                raise ValueError("test error")
+        with pytest.raises(ValueError), tracer:
+            raise ValueError("test error")
 
         assert tracer.trace.success is False
         assert "test error" in str(tracer.trace.error)
 
     def test_phase_handles_error(self) -> None:
         tracer = AgentTracer(agent_name="test", action="test")
-        with pytest.raises(RuntimeError):
-            with tracer:
-                with tracer.phase("failing_phase"):
-                    raise RuntimeError("phase failed")
+        with pytest.raises(RuntimeError), tracer, tracer.phase("failing_phase"):
+            raise RuntimeError("phase failed")
 
         assert tracer.trace.phases[0].error == "phase failed"
 
@@ -106,9 +103,8 @@ class TestAgentTracer:
 
     def test_add_metadata(self) -> None:
         tracer = AgentTracer(agent_name="test", action="test")
-        with tracer:
-            with tracer.phase("p1"):
-                tracer.add_metadata("key", "value")
+        with tracer, tracer.phase("p1"):
+            tracer.add_metadata("key", "value")
 
         assert tracer.trace.phases[0].metadata["key"] == "value"
 
