@@ -4,7 +4,7 @@
 
 | Layer | Framework | Tests | Coverage |
 |-------|-----------|-------|----------|
-| Backend | pytest + pytest-asyncio | 1842 | 96% |
+| Backend | pytest + pytest-asyncio | 2110 | 96% |
 | Frontend | Vitest + React Testing Library | 138 | - |
 | E2E | Playwright | 8 | - |
 | Lint | ruff (backend), ESLint (frontend) | 0 issues | - |
@@ -76,7 +76,7 @@ backend/tests/
 ├── test_context/            # Code indexing and search tests
 ├── test_git/                # GitHub client and repo manager tests
 ├── test_middleware/          # Rate limiter and logging middleware tests
-├── test_quality/            # Quality modules (PII monitor, duplication, feedback, test selector)
+├── test_quality/            # Quality modules (PII, duplication, feedback, test selector, guardrail, sandbox, optimizer, consensus, gateway)
 ├── test_services/           # Business logic tests (auth, kanban, dashboard, WebSocket)
 └── test_workflows/          # Pipeline orchestrator and state machine tests
 ```
@@ -137,3 +137,7 @@ Security-specific test coverage:
 - **Duplication detection**: 10 tests for block detection, metrics, edge cases
 - **Feedback tracking**: 14 tests for record/retrieve/aggregate/clear
 - **Test selection**: 13 tests for source-to-test mapping, conftest, fallback, metrics
+- **Agent sandbox**: 38 tests for filesystem, network, command, env, quota, rollback
+- **Prompt optimizer**: 35 tests for A/B testing, regression detection, improvement suggestions
+- **Multi-agent consensus**: 40 tests for voting strategies, deliberation, diversity scoring
+- **Tool gateway**: 19 tests for circuit breaker, rate limiting, auth, schema validation

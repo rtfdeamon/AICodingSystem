@@ -1,5 +1,109 @@
 # TODO
 
+## Ревизия на 2026-03-27 v30 (автоматический проход; 40 best practices + agent sandbox + prompt optimizer + consensus + tool gateway + 2110 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **2110 passed, 0 warnings** (было 1978, +132 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Agent Execution Sandbox** (`app/quality/agent_sandbox.py`)
+  - Resource quotas: CPU time, memory, file count, total bytes written
+  - Filesystem jail: allowlisted paths, read-only vs read-write zones, blocked extensions
+  - Network policy: blocked hosts (cloud metadata, localhost), protocol restrictions
+  - Command allowlist / blocklist for shell execution with pattern matching
+  - Sensitive environment variable access blocking (API keys, secrets, credentials)
+  - Three profiles: strict, standard, permissive + custom
+  - Action audit log with full provenance (who, what, when, outcome)
+  - Rollback support: track file writes for undo on violation
+  - Session reporting and global analytics
+  - ~38 tests in `test_agent_sandbox.py`
+
+- [x] **Feedback-Driven Prompt Optimizer** (`app/quality/prompt_optimizer.py`)
+  - Prompt performance tracking: success rate, quality, cost, latency
+  - A/B variant management with champion/retired lifecycle
+  - Statistical significance testing (chi-square) for prompt comparisons
+  - Improvement suggestion engine: format fixes, chain-of-thought, examples, compression
+  - Failure pattern analysis with top-reason extraction
+  - Regression detection with sliding window comparison
+  - Token efficiency suggestions for high-quality verbose prompts
+  - Global analytics across all variants
+  - ~35 tests in `test_prompt_optimizer.py`
+
+- [x] **Multi-Agent Consensus Protocol** (`app/quality/multi_agent_consensus.py`)
+  - Five voting strategies: unanimous, majority, supermajority, weighted, quorum
+  - Confidence-weighted voting with low-confidence filtering
+  - Dissenting opinion preservation on approved/rejected decisions
+  - Multi-round deliberation with opinion revision tracking
+  - Automatic escalation when majority votes NEEDS_DISCUSSION
+  - Agent diversity scoring (model, role, expertise diversity)
+  - Decision analytics: outcome breakdown, rounds-to-decision, dissent rate
+  - Agent agreement matrix for pairwise comparison
+  - ~40 tests in `test_multi_agent_consensus.py`
+
+- [x] **MCP Tool Gateway & Interop** (`app/quality/tool_gateway.py`)
+  - Tool registry with schema validation for inputs/outputs
+  - Authentication per tool (API key, OAuth, token, mTLS)
+  - Per-tool per-agent sliding window rate limiting
+  - Circuit breaker (closed/open/half-open) for failing tools
+  - Fallback tool chains when primary tool is unavailable
+  - Tool health monitoring with success rate and latency tracking
+  - Tool discovery by tag, status, and name pattern
+  - Global analytics: invocations by tool, open circuits count
+  - ~19 tests in `test_tool_gateway.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все 40 best practices реализованы
+
+Все 40 рекомендаций из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py`
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py`
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py`
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py`
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py`
+6. [x] ~~**QA: AI quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py`
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning**~~ — **СДЕЛАНО v22**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py`
+10. [x] ~~**Observability: Agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py`
+11. [x] ~~**Observability: Automated eval tests**~~ — **СДЕЛАНО v24**: `eval_tests.py`
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py`
+13. [x] ~~**Prompt versioning & lifecycle**~~ — **СДЕЛАНО v25**: `prompt_versioning.py`
+14. [x] ~~**Semantic response cache**~~ — **СДЕЛАНО v25**: `semantic_cache.py`
+15. [x] ~~**Multi-model router with cost cascading**~~ — **СДЕЛАНО v25**: `model_router.py`
+16. [x] ~~**Hallucination detection pipeline**~~ — **СДЕЛАНО v25**: `hallucination_detector.py`
+17. [x] ~~**Token budget enforcer**~~ — **СДЕЛАНО v25**: `token_budget.py`
+18. [x] ~~**Shadow A/B testing**~~ — **СДЕЛАНО v25**: `shadow_testing.py`
+19. [x] ~~**Output drift detection**~~ — **СДЕЛАНО v25**: `drift_detector.py`
+20. [x] ~~**HITL escalation engine**~~ — **СДЕЛАНО v25**: `escalation_engine.py`
+21. [x] ~~**Prompt injection defense**~~ — **СДЕЛАНО v26**: `prompt_injection_guard.py`
+22. [x] ~~**Structured retry with backoff**~~ — **СДЕЛАНО v26**: `retry_strategy.py`
+23. [x] ~~**Immutable audit trail**~~ — **СДЕЛАНО v26**: `audit_trail.py`
+24. [x] ~~**AI code diff safety scanner**~~ — **СДЕЛАНО v26**: `diff_safety_scanner.py`
+25. [x] ~~**AI Bill of Materials (AI-BOM)**~~ — **СДЕЛАНО v27**: `ai_bom.py`
+26. [x] ~~**Hallucinated dependency detection**~~ — **СДЕЛАНО v27**: `dependency_verifier.py`
+27. [x] ~~**Spec-driven verification contracts**~~ — **СДЕЛАНО v27**: `spec_verifier.py`
+28. [x] ~~**Agent reasoning trace review**~~ — **СДЕЛАНО v27**: `reasoning_trace.py`
+29. [x] ~~**Context window management**~~ — **СДЕЛАНО v28**: `context_window_manager.py`
+30. [x] ~~**LLM cost tracking & budget governance**~~ — **СДЕЛАНО v28**: `cost_tracker.py`
+31. [x] ~~**Structured output schema validation**~~ — **СДЕЛАНО v28**: `output_schema_validator.py`
+32. [x] ~~**Code attribution & provenance tracking**~~ — **СДЕЛАНО v28**: `code_attribution.py`
+33. [x] ~~**Parallel guardrail orchestrator**~~ — **СДЕЛАНО v29**: `guardrail_orchestrator.py`
+34. [x] ~~**LLM-as-Judge evaluation**~~ — **СДЕЛАНО v29**: `llm_judge.py`
+35. [x] ~~**Sensitive code zone policy**~~ — **СДЕЛАНО v29**: `sensitive_zone_policy.py`
+36. [x] ~~**Self-correction pipeline**~~ — **СДЕЛАНО v29**: `self_correction.py`
+37. [x] ~~**Agent execution sandbox**~~ — **СДЕЛАНО v30**: `agent_sandbox.py`
+38. [x] ~~**Feedback-driven prompt optimizer**~~ — **СДЕЛАНО v30**: `prompt_optimizer.py`
+39. [x] ~~**Multi-agent consensus protocol**~~ — **СДЕЛАНО v30**: `multi_agent_consensus.py`
+40. [x] ~~**MCP tool gateway & interop**~~ — **СДЕЛАНО v30**: `tool_gateway.py`
+
+---
+
 ## Ревизия на 2026-03-27 v29 (автоматический проход; 36 best practices + guardrail orchestrator + LLM judge + 1978 tests)
 
 Проверено командами:
