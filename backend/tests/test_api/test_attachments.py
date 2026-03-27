@@ -225,3 +225,47 @@ async def test_delete_attachment_forbidden_wrong_user(
     )
 
     assert response.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# Filename sanitization (path traversal prevention)
+# ---------------------------------------------------------------------------
+
+
+async def test_upload_sanitises_path_traversal_filename(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """Filenames with path traversal sequences are sanitised to basename."""
+    headers, ticket, _ = await _setup_ticket(db_session)
+
+    response = await async_client.post(
+        f"/api/v1/tickets/{ticket.id}/attachments",
+        headers=headers,
+        files={"file": ("../../etc/passwd", b"not really", "text/plain")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    # The stored filename should be just the basename, not the full path
+    assert "/" not in body["filename"]
+    assert ".." not in body["filename"]
+    assert body["filename"] == "passwd"
+
+
+async def test_upload_sanitises_null_byte_filename(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """Null bytes in filenames are stripped."""
+    headers, ticket, _ = await _setup_ticket(db_session)
+
+    response = await async_client.post(
+        f"/api/v1/tickets/{ticket.id}/attachments",
+        headers=headers,
+        files={"file": ("malicious\x00.txt", b"data", "text/plain")},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert "\x00" not in body["filename"]

@@ -48,7 +48,11 @@ async def upload_attachment(
             detail=f"File exceeds maximum size of {MAX_FILE_SIZE // (1024 * 1024)} MB.",
         )
 
-    filename = file.filename or "unnamed"
+    raw_filename = file.filename or "unnamed"
+    # Sanitize filename to prevent path traversal attacks
+    filename = Path(raw_filename).name.replace("\x00", "")
+    if not filename or filename in (".", ".."):
+        filename = "unnamed"
     file_id = uuid.uuid4()
     safe_filename = f"{file_id}_{filename}"
 

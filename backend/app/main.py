@@ -35,6 +35,10 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     configure_logging()
     logger.info("Starting %s", settings.APP_NAME)
 
+    # -- Production secrets check --
+    for warning in settings.check_production_secrets():
+        logger.warning(warning)
+
     # -- Database --
     try:
         await init_db()

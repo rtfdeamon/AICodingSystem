@@ -172,7 +172,8 @@ async def test_github_webhook_no_signature(async_client: AsyncClient) -> None:
         headers={"X-GitHub-Event": "check_run"},
     )
     # Without proper signature, should be rejected
-    assert resp.status_code in (200, 401, 403, 422)
+    # 503 if no secret configured, 401 if secret set but sig missing
+    assert resp.status_code in (200, 401, 403, 422, 503)
 
 
 # ---------------------------------------------------------------------------
@@ -346,8 +347,30 @@ async def test_n8n_deploy_status_nonexistent_ticket(
 # ---------------------------------------------------------------------------
 
 
+_WH_SECRET = "test-webhook-secret"  # noqa: S105
+
+
+def _signed_webhook_post(
+    async_client: AsyncClient,
+    payload: dict,
+    headers: dict[str, str] | None = None,
+    secret: str = _WH_SECRET,
+):
+    """Helper: POST to /webhooks/github with a valid HMAC signature."""
+    body = json.dumps(payload).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    hdrs = {"X-Hub-Signature-256": sig, "Content-Type": "application/json"}
+    if headers:
+        hdrs.update(headers)
+    return async_client.post(
+        "/api/v1/webhooks/github",
+        content=body,
+        headers=hdrs,
+    ), secret
+
+
 async def test_github_webhook_no_secret_set(async_client: AsyncClient) -> None:
-    """When GITHUB_CLIENT_SECRET is None, signature check is skipped (200)."""
+    """When GITHUB_CLIENT_SECRET is None, webhook returns 503 (fail-closed)."""
     with patch("app.api.v1.webhooks.settings") as mock_settings:
         mock_settings.GITHUB_CLIENT_SECRET = None
         resp = await async_client.post(
@@ -355,18 +378,24 @@ async def test_github_webhook_no_secret_set(async_client: AsyncClient) -> None:
             json={"ref": "refs/heads/main"},
             headers={"X-GitHub-Event": "push"},
         )
-    assert resp.status_code == 200
-    assert resp.json()["event"] == "push"
+    assert resp.status_code == 503
 
 
 async def test_github_webhook_push_event(async_client: AsyncClient) -> None:
     """GitHub push event is logged and returns 200."""
+    secret = "test-webhook-secret"
+    body = json.dumps({"ref": "refs/heads/main", "commits": []}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     with patch("app.api.v1.webhooks.settings") as mock_settings:
-        mock_settings.GITHUB_CLIENT_SECRET = None
+        mock_settings.GITHUB_CLIENT_SECRET = secret
         resp = await async_client.post(
             "/api/v1/webhooks/github",
-            json={"ref": "refs/heads/main", "commits": []},
-            headers={"X-GitHub-Event": "push"},
+            content=body,
+            headers={
+                "X-GitHub-Event": "push",
+                "X-Hub-Signature-256": sig,
+                "Content-Type": "application/json",
+            },
         )
     assert resp.status_code == 200
     assert resp.json()["event"] == "push"
@@ -374,12 +403,19 @@ async def test_github_webhook_push_event(async_client: AsyncClient) -> None:
 
 async def test_github_webhook_pull_request_event(async_client: AsyncClient) -> None:
     """GitHub pull_request event is logged."""
+    secret = "test-webhook-secret"
+    body = json.dumps({"action": "opened", "number": 42}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     with patch("app.api.v1.webhooks.settings") as mock_settings:
-        mock_settings.GITHUB_CLIENT_SECRET = None
+        mock_settings.GITHUB_CLIENT_SECRET = secret
         resp = await async_client.post(
             "/api/v1/webhooks/github",
-            json={"action": "opened", "number": 42},
-            headers={"X-GitHub-Event": "pull_request"},
+            content=body,
+            headers={
+                "X-GitHub-Event": "pull_request",
+                "X-Hub-Signature-256": sig,
+                "Content-Type": "application/json",
+            },
         )
     assert resp.status_code == 200
     assert resp.json()["event"] == "pull_request"
@@ -387,12 +423,19 @@ async def test_github_webhook_pull_request_event(async_client: AsyncClient) -> N
 
 async def test_github_webhook_check_run_event(async_client: AsyncClient) -> None:
     """GitHub check_run event with conclusion is logged."""
+    secret = "test-webhook-secret"
+    body = json.dumps({"check_run": {"conclusion": "success"}}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     with patch("app.api.v1.webhooks.settings") as mock_settings:
-        mock_settings.GITHUB_CLIENT_SECRET = None
+        mock_settings.GITHUB_CLIENT_SECRET = secret
         resp = await async_client.post(
             "/api/v1/webhooks/github",
-            json={"check_run": {"conclusion": "success"}},
-            headers={"X-GitHub-Event": "check_run"},
+            content=body,
+            headers={
+                "X-GitHub-Event": "check_run",
+                "X-Hub-Signature-256": sig,
+                "Content-Type": "application/json",
+            },
         )
     assert resp.status_code == 200
     assert resp.json()["event"] == "check_run"
@@ -400,12 +443,19 @@ async def test_github_webhook_check_run_event(async_client: AsyncClient) -> None
 
 async def test_github_webhook_unknown_event(async_client: AsyncClient) -> None:
     """Unhandled GitHub event type falls through to the else branch."""
+    secret = "test-webhook-secret"
+    body = json.dumps({"action": "created"}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     with patch("app.api.v1.webhooks.settings") as mock_settings:
-        mock_settings.GITHUB_CLIENT_SECRET = None
+        mock_settings.GITHUB_CLIENT_SECRET = secret
         resp = await async_client.post(
             "/api/v1/webhooks/github",
-            json={"action": "created"},
-            headers={"X-GitHub-Event": "star"},
+            content=body,
+            headers={
+                "X-GitHub-Event": "star",
+                "X-Hub-Signature-256": sig,
+                "Content-Type": "application/json",
+            },
         )
     assert resp.status_code == 200
     assert resp.json()["event"] == "star"
@@ -413,11 +463,18 @@ async def test_github_webhook_unknown_event(async_client: AsyncClient) -> None:
 
 async def test_github_webhook_no_event_header(async_client: AsyncClient) -> None:
     """Missing X-GitHub-Event header defaults to 'unknown'."""
+    secret = "test-webhook-secret"
+    body = json.dumps({"some": "data"}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     with patch("app.api.v1.webhooks.settings") as mock_settings:
-        mock_settings.GITHUB_CLIENT_SECRET = None
+        mock_settings.GITHUB_CLIENT_SECRET = secret
         resp = await async_client.post(
             "/api/v1/webhooks/github",
-            json={"some": "data"},
+            content=body,
+            headers={
+                "X-Hub-Signature-256": sig,
+                "Content-Type": "application/json",
+            },
         )
     assert resp.status_code == 200
     assert resp.json()["event"] == "unknown"

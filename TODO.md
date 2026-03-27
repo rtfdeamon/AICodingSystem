@@ -1,5 +1,45 @@
 # TODO
 
+## Ревизия на 2026-03-27 v21 (автоматический проход; security hardening + tech debt fixes + 907 tests + config validation + full documentation)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **907 passed, 0 warnings** (было 899, +8 новых тестов)
+- `backend/.venv/bin/pytest --cov=backend/app --cov-report=term -q` -> **TOTAL 96%** (config.py 100%)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+- `frontend: npx tsc --noEmit` -> **OK** (0 errors)
+
+### Что сделано в этом проходе
+
+- [x] **Security: Path traversal prevention in file uploads**
+  - `attachments.py`: filename sanitized via `Path(raw_filename).name` + null byte stripping
+  - Prevents `../../etc/passwd` style attacks in upload filenames
+  - 2 new tests: `test_upload_sanitises_path_traversal_filename`, `test_upload_sanitises_null_byte_filename`
+
+- [x] **Security: Webhook signature verification fail-closed**
+  - `webhooks.py`: when `GITHUB_CLIENT_SECRET` is not set, returns 503 instead of silently skipping verification
+  - Prevents unauthenticated webhook processing in misconfigured deployments
+  - Updated 7 webhook tests to use valid HMAC signatures instead of bypassing verification
+
+- [x] **Security: Production secrets startup validation**
+  - `config.py`: added `check_production_secrets()` method
+  - Logs CRITICAL warning if JWT_SECRET uses default value in production
+  - Logs WARNING if GITHUB_CLIENT_SECRET is missing in production
+  - `main.py`: startup lifespan calls `check_production_secrets()` on boot
+  - 4 new config tests: default JWT warning, missing GH secret, properly configured, dev mode
+
+- [x] **Config tests: config.py coverage 0% → 100%**
+  - `test_config.py`: 6 tests covering production secret checks, CORS parsing, log level normalization
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Что осталось открытым (backlog)
+
+1. [ ] **Advanced features**: Three-layer review architecture, CI feedback loops, AI-on-AI reviews
+
+---
+
 ## Ревизия на 2026-03-27 v20 (автоматический проход; production hardening + code splitting + structured output validation + middleware ordering)
 
 Проверено командами:

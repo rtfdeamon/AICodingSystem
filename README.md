@@ -68,7 +68,7 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry
-│   ├── tests/                 # 899 tests, 96% coverage
+│   ├── tests/                 # 907 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -83,7 +83,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   ├── monitoring/            # Grafana dashboards
 │   └── nginx/                 # Reverse proxy config
 ├── docs/                       # Documentation
-│   └── API_REFERENCE.md       # REST API reference
+│   ├── API_REFERENCE.md       # REST API reference
+│   ├── ARCHITECTURE.md        # System architecture and design
+│   ├── DEVELOPMENT.md         # Development setup and conventions
+│   ├── SECURITY.md            # Security guide and hardening
+│   └── TESTING.md             # Testing guide and coverage
 ├── e2e/                        # Playwright E2E tests
 └── shared/                     # Shared constants and event types
 ```
@@ -214,6 +218,8 @@ Base URL: `http://localhost:8000/api/v1`
 | `/context/search` | POST | Semantic code search |
 
 Full API reference: [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
+Security guide: [docs/SECURITY.md](docs/SECURITY.md)
+Testing guide: [docs/TESTING.md](docs/TESTING.md)
 
 ### WebSocket
 
@@ -238,7 +244,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 899 tests
+.venv/bin/pytest -q                    # Run all 907 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -253,11 +259,11 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary (v20)
+### Test Coverage Summary (v21)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 899 | 96% |
+| Backend | 907 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |

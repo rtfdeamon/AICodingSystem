@@ -85,5 +85,20 @@ class Settings(BaseSettings):
     def normalise_log_level(cls, v: str) -> str:
         return v.upper()
 
+    def check_production_secrets(self) -> list[str]:
+        """Return a list of warnings for insecure defaults in production."""
+        warnings: list[str] = []
+        if self.ENVIRONMENT == "production":
+            if self.JWT_SECRET == "change-me-in-production":
+                warnings.append(
+                    "CRITICAL: JWT_SECRET still uses default value in production. "
+                    "Set a strong random secret via the JWT_SECRET env var."
+                )
+            if not self.GITHUB_CLIENT_SECRET:
+                warnings.append(
+                    "WARNING: GITHUB_CLIENT_SECRET not set — GitHub webhooks will be rejected."
+                )
+        return warnings
+
 
 settings = Settings()

@@ -267,6 +267,21 @@ The application factory in `main.py` reads `settings.ENVIRONMENT` and adjusts be
 
 The Kanban board uses `kanbanStore.currentProjectId` to track the active project. On first load the store auto-creates or selects a project with a real UUID, ensuring no component ever sends `project_id='default'`. The `MetricsDashboard` and other project-scoped screens read the same store value so all views stay in sync.
 
+## Security Hardening (v21)
+
+### File Upload Protection
+- Filenames are sanitized via `Path(filename).name` to prevent path traversal (`../../etc/passwd`)
+- Null bytes stripped from filenames
+- UUID prefix ensures uniqueness
+
+### Webhook Fail-Closed
+- GitHub webhook verification returns 503 when `GITHUB_CLIENT_SECRET` is missing (instead of silently skipping)
+- HMAC-SHA256 signature verified via timing-safe `hmac.compare_digest()`
+
+### Startup Validation
+- `check_production_secrets()` runs on boot and warns about insecure defaults
+- Logged at CRITICAL/WARNING level for monitoring integration
+
 ## Context Engine
 
 The context engine provides code-aware AI assistance:

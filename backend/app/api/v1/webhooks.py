@@ -162,8 +162,10 @@ async def _verify_github_signature(request: Request, signature: str | None) -> N
     """Verify the ``X-Hub-Signature-256`` header from GitHub."""
     secret = settings.GITHUB_CLIENT_SECRET
     if not secret:
-        logger.warning("GITHUB_CLIENT_SECRET not set; skipping signature verification.")
-        return
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Webhook signature verification unavailable: secret not configured.",
+        )
     if not signature:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
