@@ -1,5 +1,82 @@
 # TODO
 
+## Ревизия на 2026-03-28 v32 (автоматический проход; 48 best practices + GRASP + license compliance + DualGauge + agentic trust + 2377 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **2377 passed, 0 warnings** (было 2252, +125 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Graph-Based Secure Coding Reasoning (GRASP)** (`app/quality/secure_coding_graph.py`)
+  - DAG of Secure Coding Practices with dependency ordering
+  - Dynamic traversal based on task relevance (keyword + domain matching)
+  - CWE-based rule library (OWASP Top-10, CERT)
+  - Three traversal strategies: topological, relevance-first, depth-first
+  - Security constraint composition preserving functional correctness
+  - Prompt enrichment with security constraints
+  - Batch evaluation with aggregated security scores
+  - Based on Patir et al. "Fortifying LLM-Based Code Generation with Graph-Based Reasoning" (arXiv:2510.09682, Oct 2025)
+  - ~35 tests in `test_secure_coding_graph.py`
+
+- [x] **License Compliance Verification** (`app/quality/license_compliance.py`)
+  - Fingerprint-based (n-gram hashing) similarity detection
+  - License classification: MIT, Apache-2.0, GPL, AGPL, LGPL, BSD, etc.
+  - LICO score combining similarity incidence with attribution accuracy
+  - Copyleft-weighted scoring (GPL/AGPL violations weigh 2×)
+  - CI/CD gate: block, warn, info based on compliance threshold
+  - Attribution template generation for compliant usage
+  - Batch scanning with aggregated compliance reports
+  - Based on Xu et al. "LiCoEval: Evaluating LLMs on License Compliance" (ICSE 2025)
+  - ~32 tests in `test_license_compliance.py`
+
+- [x] **Joint Security-Functionality Benchmarking (DualGauge)** (`app/quality/dual_gauge.py`)
+  - Dual test execution: functional + security tests per task
+  - SAFE@k metric: joint pass rate across both dimensions
+  - OWASP/CERT-grounded security test templates
+  - Severity-weighted security scoring
+  - Quality gate with configurable thresholds
+  - Batch reporting with security category breakdown
+  - Based on Pathak et al. "DualGauge: Automated Joint Security-Functionality Benchmarking" (arXiv:2511.20709, Nov 2025)
+  - ~30 tests in `test_dual_gauge.py`
+
+- [x] **Agentic Trust Framework (ATF)** (`app/quality/agentic_trust.py`)
+  - Four maturity levels: Intern → Junior → Senior → Principal
+  - Runtime least-privilege enforcement per task
+  - Confused deputy and privilege escalation prevention
+  - Promotion criteria: tasks completed, success rate, security score
+  - Auto-demotion on security violations
+  - Risk-proportional review pipelines
+  - Full audit trail of trust decisions
+  - Based on CSA "The Agentic Trust Framework: Zero Trust Governance for AI Agents" (Feb 2026)
+  - ~28 tests in `test_agentic_trust.py`
+
+### Всего best practices: 48/48 (было 44)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-44 | (см. v31) | v24-v31 |
+| 45 | Graph-Based Secure Coding Reasoning (GRASP) | v32 |
+| 46 | License Compliance Verification | v32 |
+| 47 | Joint Security-Functionality Benchmarking (DualGauge) | v32 |
+| 48 | Agentic Trust Framework (ATF) | v32 |
+
+### Результаты тестов
+- Backend: **2377 passed** (было 2252, +125 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- Patir et al. "Fortifying LLM-Based Code Generation with Graph-Based Reasoning on Secure Coding Practices" (arXiv:2510.09682, Oct 2025)
+- Xu et al. "LiCoEval: Evaluating LLMs on License Compliance in Code Generation" (ICSE 2025, IEEE/ACM)
+- Pathak et al. "DualGauge: Automated Joint Security-Functionality Benchmarking for Secure Code Generation" (arXiv:2511.20709, Nov 2025)
+- Cloud Security Alliance "The Agentic Trust Framework: Zero Trust Governance for AI Agents" (Feb 2026)
+- McKinsey "State of AI Trust in 2026: Shifting to the Agentic Era"
+- OWASP Top 10 for Agentic Applications (Dec 2025)
+
+---
+
 ## Ревизия на 2026-03-27 v31 (автоматический проход; 44 best practices + AST validator + CI feedback loop + security prompts + agent resilience + 2252 tests)
 
 Проверено командами:

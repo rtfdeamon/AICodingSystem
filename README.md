@@ -69,11 +69,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
 │   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace, LLM judge
-│   │   ├── quality/           # PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway
+│   │   ├── quality/           # 48 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 2110 tests, 96% coverage
+│   ├── tests/                 # 2377 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -249,7 +249,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 2110 tests
+.venv/bin/pytest -q                    # Run all 2377 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -264,20 +264,20 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary (v30)
+### Test Coverage Summary (v32)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 2110 | 96% |
+| Backend | 2377 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (44/44 Implemented)
+## Best Practices (48/48 Implemented)
 
-The system implements all 44 industry best practices for AI coding systems (2025-2026):
+The system implements all 48 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -325,6 +325,10 @@ The system implements all 44 industry best practices for AI coding systems (2025
 | 42 | CI Feedback Loop | `ci_feedback_loop.py` | v31 |
 | 43 | Security-Aware Prompt Injection | `security_prompt_injection.py` | v31 |
 | 44 | Agent Resilience Manager | `agent_resilience.py` | v31 |
+| 45 | Graph-Based Secure Coding (GRASP) | `secure_coding_graph.py` | v32 |
+| 46 | License Compliance Verification | `license_compliance.py` | v32 |
+| 47 | Joint Security-Functionality (DualGauge) | `dual_gauge.py` | v32 |
+| 48 | Agentic Trust Framework (ATF) | `agentic_trust.py` | v32 |
 
 ## Monitoring
 
