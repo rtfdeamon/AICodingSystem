@@ -1,5 +1,80 @@
 # TODO
 
+## Ревизия на 2026-03-27 v23 (автоматический проход; quality modules + 6 best practices implemented + 1008 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1008 passed, 0 warnings** (было 943, +65 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **PII leakage monitoring** (`app/quality/pii_monitor.py`)
+  - Scans agent outputs for 10 PII types: email, phone, SSN, credit card, AWS keys, API keys, private keys, JWT tokens, IP addresses, password hashes
+  - Regex-based detection with confidence scoring
+  - Allowlist for known non-PII patterns (example.com, noreply@, localhost)
+  - Auto-redaction with type-specific masking (e.g., `a***@domain.com`, `***-**-6789`)
+  - `validate_agent_output()` API for clean/dirty check
+  - 28 tests in `test_pii_monitor.py`
+
+- [x] **Duplication detection** (`app/quality/duplication_detector.py`)
+  - Detects duplicated code blocks across AI-generated files
+  - Sliding window approach with normalized comparison
+  - Reports duplication ratio, block count, and locations
+  - Configurable minimum block size (default: 4 lines, 80 chars)
+  - 10 tests in `test_duplication_detector.py`
+
+- [x] **Developer feedback loop** (`app/quality/feedback_tracker.py`)
+  - Tracks accepted/rejected/deferred AI review findings
+  - Aggregates acceptance/rejection rates and reasons
+  - API endpoint `POST /reviews/{id}/feedback` for submitting feedback
+  - `get_review_feedback_metrics()` computes AI-human agreement rate
+  - Rejection reason aggregation for prompt fine-tuning
+  - 14 tests in `test_feedback_tracker.py`
+
+- [x] **Intelligent test selection** (`app/quality/test_selector.py`)
+  - Maps changed source files to relevant test files
+  - Source-to-test path mapping (e.g., `app/agents/X.py` → `tests/test_agents/test_X.py`)
+  - Broad-impact detection for core files (config, database, models)
+  - Conftest change triggers full test run
+  - Fallback to full suite when no mapping found
+  - 13 tests in `test_test_selector.py`
+
+- [x] **AI quality metrics dashboard** (`app/quality/ai_metrics.py`)
+  - AI regression rate (test failures per AI-coded ticket)
+  - AI defect density (review findings per ticket)
+  - Merge confidence (% approved on first review)
+  - Agent acceptance rates by agent name
+  - AI vs human review comparison
+  - Agent performance (latency, cost, success rate)
+  - API endpoints: `GET /dashboard/ai-quality-metrics`, `GET /dashboard/review-feedback`
+
+- [x] **Security scanning for AI code** (enhanced via existing `security_agent.py` + `security_scanner.py`)
+  - Already implemented in v21-v22; this pass integrates with quality metrics dashboard
+  - Security vuln count tracked via `get_code_quality()` in dashboard_service
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Что осталось открытым (best practices backlog)
+
+Рекомендации из индустрии (2025-2026 best practices для AI coding систем):
+
+1. [ ] **Review: Context engine** — собирать cross-repo usages, historical PRs, architecture docs как контекст для ревью
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py` + API endpoint
+3. [ ] **Review: Negotiation workflows** — agents могут предлагать альтернативы при pushback от разработчика
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py` (source→test mapping)
+5. [ ] **CI/CD: Self-healing tests** — агенты автоматически чинят сломанные тесты при изменениях UI/env
+6. [x] ~~**QA: AI-specific quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py` + 2 API endpoints
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning for AI code**~~ — **СДЕЛАНО v22-v23**: `security_agent.py` + `security_scanner.py` + quality metrics integration
+9. [ ] **Observability: OpenTelemetry semantic conventions** — GenAI semantic conventions для трейсинга
+10. [ ] **Observability: End-to-end agent tracing** — полные execution traces для каждого agent run
+11. [ ] **Observability: Automated evaluation tests in CI/CD** — baseline regression detection для agent outputs
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py` (10 PII types, redaction, allowlist)
+
+---
+
 ## Ревизия на 2026-03-27 v22 (автоматический проход; three-layer review + CI feedback loops + 943 tests + best practices backlog)
 
 Проверено командами:
@@ -34,22 +109,9 @@
 
 - [x] **Lint: 0 issues (All checks passed!)**
 
-### Что осталось открытым (best practices backlog)
+### Что осталось открытым (backlog) — выполнено в v23
 
-Рекомендации из индустрии (2025-2026 best practices для AI coding систем):
-
-1. [ ] **Review: Context engine** — собирать cross-repo usages, historical PRs, architecture docs как контекст для ревью
-2. [ ] **Review: Developer feedback loop** — трекать какие findings принимают/отклоняют для fine-tuning промптов
-3. [ ] **Review: Negotiation workflows** — agents могут предлагать альтернативы при pushback от разработчика
-4. [ ] **CI/CD: Intelligent test selection** — предсказывать какие тесты релевантны для каждого изменения (40% ускорение)
-5. [ ] **CI/CD: Self-healing tests** — агенты автоматически чинят сломанные тесты при изменениях UI/env
-6. [ ] **QA: AI-specific quality metrics dashboard** — AI-attributed regression rate, defect density, merge confidence
-7. [ ] **QA: Duplication detection** — мониторинг дублирования в AI-generated коде (8x increase vs human)
-8. [ ] **QA: Security scanning for AI code** — dedicated security анализ для AI-generated кода (322% больше privilege escalation)
-9. [ ] **Observability: OpenTelemetry semantic conventions** — GenAI semantic conventions для трейсинга
-10. [ ] **Observability: End-to-end agent tracing** — полные execution traces для каждого agent run
-11. [ ] **Observability: Automated evaluation tests in CI/CD** — baseline regression detection для agent outputs
-12. [ ] **Observability: PII leakage monitoring** — валидация что agent outputs не утекают PII
+1. [x] ~~6 из 12 best practices~~ **СДЕЛАНО v23**: PII monitor, duplication detector, feedback tracker, test selector, AI metrics, security integration
 
 ---
 

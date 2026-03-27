@@ -582,6 +582,63 @@ Response 200: paginated project list
 
 ---
 
+## Quality & AI Metrics
+
+### AI Quality Metrics
+```
+GET /dashboard/ai-quality-metrics?project_id={uuid}&days=30
+Authorization: Bearer <token>
+
+Response 200:
+{
+  "agent_acceptance_rates": {"multi-agent-3layer": {"total_reviews": 5, "approved": 3, "approval_rate": 60.0}},
+  "ai_regression_rate": {"total_test_runs": 20, "failed_runs": 2, "regression_rate": 10.0},
+  "ai_defect_density": {"defects_found": 3, "tickets_reviewed": 10, "defect_density": 0.3},
+  "merge_confidence": {"approved_on_first_review": 7, "total_first_reviews": 10, "confidence_pct": 70.0},
+  "ai_vs_human_stats": {"ai_agent": {"total_reviews": 15, "approved": 10, "approval_rate": 66.7}},
+  "agent_performance": {"claude": {"total_calls": 50, "avg_latency_ms": 2500, "total_cost_usd": 1.25, "success_rate": 98.0}},
+  "date_range_days": 30
+}
+```
+
+### Review Feedback Metrics
+```
+GET /dashboard/review-feedback?project_id={uuid}&days=30
+Authorization: Bearer <token>
+
+Response 200:
+{
+  "ai_human_agreement_rate": 75.0,
+  "total_comparisons": 8,
+  "agreements": 6,
+  "in_memory_feedback": {"total": 20, "accepted": 14, "rejected": 4, "acceptance_rate": 70.0},
+  "top_rejection_reasons": {"false positive": 3, "not actionable": 1}
+}
+```
+
+### Submit Finding Feedback
+```
+POST /reviews/{review_id}/feedback
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "finding_index": 0,
+  "action": "accepted",
+  "reason": "good catch"
+}
+
+Response 201:
+{
+  "review_id": "uuid",
+  "finding_index": 0,
+  "action": "accepted",
+  "reason": "good catch"
+}
+```
+
+---
+
 ## Error Responses
 
 All errors follow this format:

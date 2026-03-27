@@ -65,10 +65,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── git/               # GitHub client, repo manager, diff parser
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
+│   │   ├── quality/           # PII monitor, duplication, AI metrics, feedback
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry
-│   ├── tests/                 # 943 tests, 96% coverage
+│   ├── tests/                 # 1008 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -244,7 +245,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 943 tests
+.venv/bin/pytest -q                    # Run all 1008 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -263,7 +264,7 @@ npm run build        # TypeScript build check
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 943 | 96% |
+| Backend | 1008 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |

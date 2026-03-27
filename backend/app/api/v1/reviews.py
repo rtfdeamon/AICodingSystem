@@ -16,6 +16,7 @@ from app.database import get_db
 from app.models.review import Review, ReviewDecision, ReviewerType
 from app.models.ticket import ColumnName, Ticket
 from app.models.user import User
+from app.quality.feedback_tracker import FeedbackAction, record_feedback
 from app.services.kanban_service import move_ticket
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,19 @@ class ReviewResponse(BaseModel):
             log_id=review.log_id,
             created_at=review.created_at.isoformat(),
         )
+
+
+class FindingFeedbackRequest(BaseModel):
+    finding_index: int = Field(ge=0)
+    action: str = Field(pattern=r"^(accepted|rejected|deferred)$")
+    reason: str = ""
+
+
+class FindingFeedbackResponse(BaseModel):
+    review_id: uuid.UUID
+    finding_index: int
+    action: str
+    reason: str
 
 
 class AiReviewTriggerResponse(BaseModel):
@@ -327,4 +341,40 @@ async def trigger_ai_review(
         total_cost_usd=total_cost,
         agent_reviews=result_json["agent_reviews"],
         meta_review=meta_json,
+    )
+
+
+@router.post(
+    "/reviews/{review_id}/feedback",
+    response_model=FindingFeedbackResponse,
+    status_code=201,
+)
+async def submit_finding_feedback(
+    review_id: uuid.UUID,
+    data: FindingFeedbackRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _current_user: Annotated[User, Depends(get_current_user)],
+) -> FindingFeedbackResponse:
+    """Submit developer feedback on an AI review finding.
+
+    Tracks which AI findings developers accept/reject for prompt tuning.
+    """
+    # Verify review exists
+    result = await db.execute(select(Review).where(Review.id == review_id))
+    review = result.scalar_one_or_none()
+    if review is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found.")
+
+    feedback = record_feedback(
+        review_id=review_id,
+        finding_index=data.finding_index,
+        action=FeedbackAction(data.action),
+        reason=data.reason,
+    )
+
+    return FindingFeedbackResponse(
+        review_id=feedback.review_id,
+        finding_index=feedback.finding_index,
+        action=feedback.action.value,
+        reason=feedback.reason,
     )

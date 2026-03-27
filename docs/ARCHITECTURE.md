@@ -15,6 +15,7 @@ backend/app/
 ├── git/             # Git/GitHub operations
 ├── middleware/       # Cross-cutting concerns
 ├── models/          # Database models
+├── quality/         # QA: PII monitoring, duplication, metrics, feedback
 ├── schemas/         # Request/response validation
 ├── services/        # Business logic layer
 └── workflows/       # Pipeline orchestration
@@ -284,6 +285,25 @@ The Kanban board uses `kanbanStore.currentProjectId` to track the active project
 ### Startup Validation
 - `check_production_secrets()` runs on boot and warns about insecure defaults
 - Logged at CRITICAL/WARNING level for monitoring integration
+
+## Quality Assurance Modules (v23)
+
+The `app/quality/` package provides AI-specific quality assurance capabilities:
+
+### PII Leakage Monitor (`pii_monitor.py`)
+Scans AI agent outputs for 10 PII types (email, phone, SSN, credit card, AWS keys, API keys, private keys, JWT tokens, IP addresses, password hashes). Uses regex-based detection with confidence scoring, allowlists for known safe patterns, and automatic redaction.
+
+### Duplication Detector (`duplication_detector.py`)
+Detects duplicated code blocks across AI-generated files. Uses a sliding-window approach with normalized line comparison and MD5 hashing. Reports duplication ratio, block count, and precise locations.
+
+### Developer Feedback Tracker (`feedback_tracker.py`)
+Tracks which AI review findings developers accept, reject, or defer. Aggregates acceptance/rejection rates and reasons for prompt fine-tuning. API endpoint: `POST /reviews/{id}/feedback`. Computes AI-human agreement rate from DB.
+
+### Intelligent Test Selector (`test_selector.py`)
+Maps changed source files to relevant test files using path conventions (e.g., `app/agents/X.py` → `tests/test_agents/test_X.py`). Detects broad-impact changes (config, database, models) and triggers wider test coverage. Falls back to full suite when no mapping found.
+
+### AI Quality Metrics (`ai_metrics.py`)
+Dashboard metrics specific to AI-generated code: regression rate, defect density, merge confidence, agent acceptance rates, AI vs human review comparison, and agent performance (latency, cost, success rate). Exposed via `GET /dashboard/ai-quality-metrics` and `GET /dashboard/review-feedback`.
 
 ## Context Engine
 

@@ -4,7 +4,7 @@
 
 | Layer | Framework | Tests | Coverage |
 |-------|-----------|-------|----------|
-| Backend | pytest + pytest-asyncio | 943 | 96% |
+| Backend | pytest + pytest-asyncio | 1008 | 96% |
 | Frontend | Vitest + React Testing Library | 138 | - |
 | E2E | Playwright | 8 | - |
 | Lint | ruff (backend), ESLint (frontend) | 0 issues | - |
@@ -76,6 +76,7 @@ backend/tests/
 ├── test_context/            # Code indexing and search tests
 ├── test_git/                # GitHub client and repo manager tests
 ├── test_middleware/          # Rate limiter and logging middleware tests
+├── test_quality/            # Quality modules (PII monitor, duplication, feedback, test selector)
 ├── test_services/           # Business logic tests (auth, kanban, dashboard, WebSocket)
 └── test_workflows/          # Pipeline orchestrator and state machine tests
 ```
@@ -132,3 +133,7 @@ Security-specific test coverage:
 - **RBAC enforcement**: developer cannot deploy to production, viewer cannot create tickets
 - **Auth**: invalid credentials rejected, token expiry handled, password hashing verified
 - **Config validation**: production secrets warning on startup
+- **PII monitoring**: 28 tests covering 10 PII types, redaction, allowlist, confidence filtering
+- **Duplication detection**: 10 tests for block detection, metrics, edge cases
+- **Feedback tracking**: 14 tests for record/retrieve/aggregate/clear
+- **Test selection**: 13 tests for source-to-test mapping, conftest, fallback, metrics
