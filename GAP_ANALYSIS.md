@@ -1,19 +1,23 @@
 # GAP Analysis: AI Coding Pipeline MVP (Iteration 1)
 
-**Date:** 2026-03-27 (updated v19)
-**Status:** MVP feature-complete, iteration 5
+**Date:** 2026-03-27 (updated v20)
+**Status:** MVP feature-complete, iteration 6
 
 ## Current State
 
-| Gate | Before | After v19 |
+| Gate | Before | After v20 |
 |------|--------|-----------|
 | `pytest -q` | 26 failed / 11 passed | **899 passed / 0 failed** |
-| `npm run build` | TS errors | **Build OK** |
-| `vitest run` | 0 tests | **138 passed** |
+| `npm run build` | TS errors | **Build OK (code-split chunks)** |
+| `vitest run` | 0 tests | **138+ passed** |
 | Auth flow | 500 on register | **Working (register + login + /me)** |
-| Frontend preview | Crash | **Loads, auth works** |
+| Frontend preview | Crash | **Loads, auth works, lazy routes** |
 | Coverage | 0% | **96%** |
 | Lint | 48 issues | **0 issues** |
+| Code splitting | Not implemented | **React.lazy + Suspense on all routes** |
+| Production hardening | No env toggle | **ENVIRONMENT config, docs disabled, sanitised errors** |
+| Structured output | Raw JSON only | **PlanOutput + ReviewOutput Pydantic validation** |
+| Project selector | Hardcoded 'default' | **Real UUID via kanbanStore.currentProjectId** |
 
 ---
 
@@ -43,6 +47,15 @@
 
 ### 7. ~~AI Logs Endpoint Returns Empty/404~~ **RESOLVED v16**
 - **Status:** AI logs endpoint returns real records with ticket_id, agent, status filtering. 96% coverage on ai_logs module.
+
+### 8. ~~Code Splitting / Bundle Optimisation~~ **RESOLVED v20**
+- **Status:** All route-level components use `React.lazy()` + `Suspense`. Vite produces separate chunks per route. `ErrorBoundary` catches load failures.
+
+### 9. ~~Structured Output Validation for AI Agents~~ **RESOLVED v20**
+- **Status:** `PlanOutput` and `ReviewOutput` Pydantic schemas validate agent JSON via `validate_output()` helper. Graceful fallback on malformed output.
+
+### 10. ~~Production Hardening~~ **RESOLVED v20**
+- **Status:** `ENVIRONMENT` config variable controls docs visibility and error detail. Custom exception handlers sanitise 500 responses in production.
 
 ---
 

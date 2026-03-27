@@ -1,5 +1,51 @@
 # TODO
 
+## Ревизия на 2026-03-27 v20 (автоматический проход; production hardening + code splitting + structured output validation + middleware ordering)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **899 passed, 0 warnings**
+- `backend/.venv/bin/pytest --cov=backend/app --cov-report=term -q` -> **TOTAL 96%**
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB, down from >500KB)
+- `frontend: npx tsc --noEmit` -> **OK** (0 errors)
+
+### Что сделано в этом проходе
+
+- [x] **Code splitting: React.lazy() + Suspense для route-level splitting**
+  - 9 route-level компонентов теперь загружаются динамически через `React.lazy()`
+  - `<Suspense fallback={<FullPageSpinner />}>` обёрнут вокруг `<Routes>`
+  - Main bundle: 377KB (было >500KB), компоненты в отдельных chunks (KanbanBoard 60KB, TicketDetail 25KB, etc.)
+
+- [x] **Project selector UI**
+  - Добавлен `<select>` dropdown в header KanbanBoard для выбора проекта
+  - При 2+ проектах — dropdown, при 1 проекте — plain text label
+  - При переключении: unsubscribe/subscribe WebSocket, fetch нового board
+
+- [x] **Production hardening: docs disabled + custom exception handlers**
+  - Docs `/docs` и `/redoc` отключены в production mode (`ENVIRONMENT=production`)
+  - Global exception handler: sanitized 500 errors в prod (без stack trace), detailed в dev
+  - RequestValidationError handler: structured 422 с field-level errors
+  - Настройка `ENVIRONMENT` в config.py (default: "development")
+
+- [x] **Structured output validation для AI agents**
+  - Standalone `validate_output()` функция в `base.py` (Pydantic v2)
+  - `PlanOutput` + `PlanTaskItem` модели для planning_agent (validate subtasks structure)
+  - `ReviewOutput` + `ReviewFinding` модели для review_agent (validate findings structure)
+  - Graceful degradation: при ошибке валидации — warning в лог, raw response используется как есть
+
+- [x] **Middleware ordering fix**
+  - Порядок middleware исправлен: CORS (outermost) → Rate limiter → Logging (innermost)
+  - Добавлен комментарий объясняющий reverse-registration поведение FastAPI
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Что осталось открытым (backlog)
+
+1. [ ] **Advanced features**: Three-layer review architecture, CI feedback loops, AI-on-AI reviews
+
+---
+
 ## Ревизия на 2026-03-27 v19 (автоматический проход; 899 backend tests + 138 frontend tests + artifact API wiring + DEFAULT_PROJECT_ID fix + GAP closure)
 
 Проверено командами:
@@ -33,11 +79,11 @@
 
 - [x] **GAP_ANALYSIS.md обновлён — все 8 P0/P1/P2 gaps закрыты**
 
-### Что осталось открытым (backlog)
+### Что осталось открытым (backlog) — выполнено в v20
 
-1. [ ] **Advanced features**: Three-layer review architecture, CI feedback loops, AI-on-AI reviews
-2. [ ] **Code splitting**: Frontend bundle >500KB — add dynamic import() for route-level splitting
-3. [ ] **Project selector**: Add explicit project picker UI (currently auto-selects first project)
+1. [x] ~~**Advanced features**: Three-layer review architecture, CI feedback loops, AI-on-AI reviews~~ (moved to backlog)
+2. [x] ~~**Code splitting**: Frontend bundle >500KB~~ **СДЕЛАНО v20: React.lazy() + Suspense, main bundle 377KB**
+3. [x] ~~**Project selector**: Add explicit project picker UI~~ **СДЕЛАНО v20: dropdown в KanbanBoard header**
 
 ---
 
@@ -154,7 +200,7 @@
 7. [x] ~~**E2E tests**~~ **СДЕЛАНО v18**
 8. [x] ~~**Frontend component tests**~~ **СДЕЛАНО v18**
 
-### Best Practices Backlog (обновлено 2026-03-27 v17)
+### Best Practices Backlog (обновлено 2026-03-27 v20)
 
 #### AI Pipeline Best Practices (из интернет-источников 2025-2026)
 - [ ] **Three-layer review architecture**: real-time IDE feedback + PR-level AI analysis + periodic architectural reviews (verdent.ai, qodo.ai)
@@ -165,15 +211,15 @@
 - [ ] **Prompt injection testing**: тестировать AI pipeline на prompt injection уязвимости в CI (computerweekly.com)
 
 #### FastAPI Production Hardening (из интернет-источников 2025-2026)
-- [ ] **Disable docs in production**: отключить `/docs` и `/redoc` в production mode (fastlaunchapi.dev)
-- [ ] **Custom exception handlers**: sanitized error responses без stack traces в production (render.com)
+- [x] ~~**Disable docs in production**~~ **СДЕЛАНО v20: docs_url=None, redoc_url=None в prod**
+- [x] ~~**Custom exception handlers**~~ **СДЕЛАНО v20: sanitized 500 в prod, structured 422**
 - [ ] **pip-audit integration**: регулярное сканирование dependencies на уязвимости в CI (VolkanSah/Securing-FastAPI-Applications)
 - [ ] **WAF + API gateway**: Kong или AWS API Gateway перед FastAPI в production (davidmuraya.com)
-- [ ] **Middleware ordering**: security middleware до business logic middleware (zhanymkanov/fastapi-best-practices)
+- [x] ~~**Middleware ordering**~~ **СДЕЛАНО v20: CORS → Rate limiter → Logging**
 
 #### AI Agent Orchestration
 - [ ] Внедрить agent capability scoring: динамический выбор агента на основе исторических метрик успешности
-- [ ] Добавить structured output validation: JSON schema validation для ответов AI агентов
+- [x] ~~Добавить structured output validation~~ **СДЕЛАНО v20: Pydantic v2 PlanOutput/ReviewOutput с graceful degradation**
 - [ ] Реализовать agent response caching: кэширование для идентичных контекстов (ticket+diff hash)
 
 #### Code Quality Guardrails

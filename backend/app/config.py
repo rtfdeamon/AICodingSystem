@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     # ── Core ────────────────────────────────────────────────────────────
     APP_NAME: str = "AI Coding Pipeline"
+    ENVIRONMENT: str = Field(
+        default="development",
+        description="Runtime environment: 'development', 'staging', or 'production'.",
+    )
     LOG_LEVEL: str = "INFO"
 
     # ── Database ────────────────────────────────────────────────────────

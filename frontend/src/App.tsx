@@ -1,26 +1,47 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { FullPageSpinner } from '@/components/common/Spinner';
 
-// Auth pages
-import { LoginPage } from '@/components/auth/LoginPage';
-import { RegisterPage } from '@/components/auth/RegisterPage';
-import { OAuthCallback } from '@/components/auth/OAuthCallback';
-
-// Layout
+// Layout (kept eager – renders on every authenticated page)
 import { AppShell } from '@/components/layout/AppShell';
 
-// Protected pages
-import { KanbanBoard } from '@/components/kanban/KanbanBoard';
-import { TicketDetail } from '@/components/tickets/TicketDetail';
-import { MetricsDashboard } from '@/components/dashboard/MetricsDashboard';
-import { UserManagement } from '@/components/admin/UserManagement';
-import { AboutPage } from '@/components/about/AboutPage';
-import { SettingsPage } from '@/components/settings/SettingsPage';
-
 import type { UserRole } from '@/types';
+
+/* ─── Lazy-loaded route components ─── */
+
+// Auth pages
+const LoginPage = lazy(() =>
+  import('@/components/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
+);
+const RegisterPage = lazy(() =>
+  import('@/components/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+);
+const OAuthCallback = lazy(() =>
+  import('@/components/auth/OAuthCallback').then((m) => ({ default: m.OAuthCallback })),
+);
+
+// Protected pages
+const KanbanBoard = lazy(() =>
+  import('@/components/kanban/KanbanBoard').then((m) => ({ default: m.KanbanBoard })),
+);
+const TicketDetail = lazy(() =>
+  import('@/components/tickets/TicketDetail').then((m) => ({ default: m.TicketDetail })),
+);
+const MetricsDashboard = lazy(() =>
+  import('@/components/dashboard/MetricsDashboard').then((m) => ({ default: m.MetricsDashboard })),
+);
+const UserManagement = lazy(() =>
+  import('@/components/admin/UserManagement').then((m) => ({ default: m.UserManagement })),
+);
+const AboutPage = lazy(() =>
+  import('@/components/about/AboutPage').then((m) => ({ default: m.AboutPage })),
+);
+const SettingsPage = lazy(() =>
+  import('@/components/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +100,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <Suspense fallback={<FullPageSpinner />}>
           <Routes>
             {/* Public-only routes (redirect if logged in) */}
             <Route element={<PublicOnlyRoute />}>
@@ -109,6 +131,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/board" replace />} />
             <Route path="*" element={<Navigate to="/board" replace />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>

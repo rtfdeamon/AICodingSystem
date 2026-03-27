@@ -9,6 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_log import AiLog, AiLogStatus
@@ -59,6 +60,24 @@ def calculate_cost(model_id: str, prompt_tokens: int, completion_tokens: int) ->
     return (prompt_tokens / 1_000) * prices["input"] + (completion_tokens / 1_000) * prices[
         "output"
     ]
+
+
+def validate_output(response: dict, schema: type[BaseModel]) -> dict:
+    """Validate an AI response dict against a Pydantic model schema.
+
+    Returns the validated (and potentially coerced) dict if validation succeeds,
+    or the original *response* unchanged if validation fails (graceful degradation).
+    """
+    try:
+        validated = schema.model_validate(response)
+        return validated.model_dump()
+    except ValidationError as exc:
+        logger.warning(
+            "Output validation failed against %s: %s",
+            schema.__name__,
+            exc,
+        )
+        return response
 
 
 class BaseAgent(abc.ABC):

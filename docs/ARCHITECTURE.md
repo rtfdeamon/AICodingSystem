@@ -216,6 +216,57 @@ Redis-backed sliding window rate limiter:
 - Structured JSON logging via middleware
 - Health check endpoint: `GET /health`
 
+## Middleware Ordering
+
+FastAPI applies middleware in reverse registration order (last added runs first on the inbound request). The application registers middleware so the final execution order is:
+
+```
+Inbound Request
+    │
+    ▼
+┌──────────────────┐
+│  CORS Middleware  │  Outermost — handles preflight, origin validation
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│  Rate Limiter    │  Redis-backed sliding window, per-IP tracking
+└────────┬─────────┘
+         ▼
+┌──────────────────┐
+│  Request Logging │  Structured JSON logging with timing
+└────────┬─────────┘
+         ▼
+    Route Handler
+```
+
+This ordering ensures security-related middleware (CORS, rate limiting) runs before business-logic middleware (logging), which means malicious or over-limit requests are rejected before any processing occurs.
+
+## Structured Output Validation
+
+AI agents return free-form JSON. To enforce contract guarantees without crashing the pipeline, each agent defines a Pydantic schema for its expected output:
+
+| Agent | Schema | Key Fields |
+|-------|--------|------------|
+| PlanningAgent | `PlanOutput` | `plan_markdown: str`, `subtasks: list[PlanTaskItem]`, `file_list: list[str]` |
+| ReviewAgent | `ReviewOutput` | `findings: list[ReviewFinding]`, `comments: list[ReviewFinding]`, `summary: str` |
+
+The shared `validate_output(response_dict, SchemaClass)` helper in `agents/base.py` calls `schema.model_validate(response)` and returns the coerced dict on success. On failure it logs a warning and returns the original dict unchanged — graceful degradation ensures the pipeline continues even when agents produce slightly non-conforming JSON.
+
+Adding a new output schema follows the same pattern: define a `BaseModel` subclass, call `validate_output()` after parsing the agent response.
+
+## Production Hardening
+
+The application factory in `main.py` reads `settings.ENVIRONMENT` and adjusts behaviour:
+
+- **OpenAPI docs** (`/docs`, `/redoc`) are disabled when `ENVIRONMENT=production` to avoid exposing internal API surface.
+- **Generic exception handler** returns a sanitised `{"detail": "Internal server error"}` in production; in development it includes the full traceback for debugging.
+- **Validation exception handler** returns field-level errors in all environments (safe to expose).
+- **Lifespan hooks** catch and log database/Redis connection failures as warnings so the app can start even if infrastructure is temporarily unavailable.
+
+## Project Selector UI
+
+The Kanban board uses `kanbanStore.currentProjectId` to track the active project. On first load the store auto-creates or selects a project with a real UUID, ensuring no component ever sends `project_id='default'`. The `MetricsDashboard` and other project-scoped screens read the same store value so all views stay in sync.
+
 ## Context Engine
 
 The context engine provides code-aware AI assistance:

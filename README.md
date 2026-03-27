@@ -144,6 +144,7 @@ All configuration is via environment variables (see `.env.example`):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `ENVIRONMENT` | Runtime environment (`development`, `staging`, `production`) | `development` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql+asyncpg://...` |
 | `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
 | `JWT_SECRET_KEY` | Secret for JWT tokens | (required) |
@@ -155,6 +156,41 @@ All configuration is via environment variables (see `.env.example`):
 | `N8N_WEBHOOK_URL` | n8n workflow trigger URL | (optional) |
 
 AI provider keys are optional — the system gracefully degrades to mock/fallback responses when keys are not configured.
+
+## Code Splitting
+
+The frontend uses `React.lazy()` + `Suspense` to split every route-level page into its own chunk. Only the `AppShell` layout is loaded eagerly; everything else (LoginPage, KanbanBoard, TicketDetail, MetricsDashboard, etc.) is loaded on demand when the user navigates to that route.
+
+```tsx
+const KanbanBoard = lazy(() =>
+  import('@/components/kanban/KanbanBoard').then((m) => ({ default: m.KanbanBoard })),
+);
+```
+
+A shared `<FullPageSpinner />` is rendered as the `Suspense` fallback while chunks load. An `<ErrorBoundary>` at the root catches load failures and prevents blank screens.
+
+## Production Hardening
+
+The backend adapts its behaviour based on the `ENVIRONMENT` config variable (`development`, `staging`, or `production`):
+
+| Behaviour | Development | Production |
+|-----------|-------------|------------|
+| OpenAPI docs (`/docs`, `/redoc`) | Enabled | Disabled |
+| Exception detail in 500 responses | Full traceback | Sanitised `"Internal server error"` |
+| Validation errors (422) | Field-level detail | Field-level detail (safe in all envs) |
+
+Custom exception handlers are registered at application startup to enforce this.
+
+## Structured Output Validation
+
+AI agent responses are validated against Pydantic schemas before being consumed by the pipeline:
+
+| Agent | Schema | Fields |
+|-------|--------|--------|
+| PlanningAgent | `PlanOutput` | `plan_markdown`, `subtasks` (list of `PlanTaskItem`), `file_list` |
+| ReviewAgent | `ReviewOutput` | `findings`, `comments` (list of `ReviewFinding`), `summary` |
+
+Validation is **graceful**: if the agent returns malformed JSON that does not match the schema, the system logs a warning and falls back to the raw parsed dict. This ensures the pipeline never crashes due to unexpected AI output while still enforcing structure when possible.
 
 ## API Overview
 
@@ -217,15 +253,16 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary
+### Test Coverage Summary (v20)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
 | Backend | 899 | 96% |
-| Frontend | 138 | - |
+| Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |
+| Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
 ## Monitoring
 

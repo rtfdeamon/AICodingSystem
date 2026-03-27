@@ -8,10 +8,11 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.base import AgentResponse
+from app.agents.base import AgentResponse, validate_output
 from app.agents.router import execute_with_fallback, route_task
 from app.context.engine import ContextEngine
 from app.models.ai_plan import AiPlan, PlanStatus
@@ -59,6 +60,29 @@ Repository language mix and key directories are provided in the context above.
 
 Generate a comprehensive implementation plan.\
 """
+
+
+# ── Pydantic output schema ────────────────────────────────────────────
+
+
+class PlanTaskItem(BaseModel):
+    """Schema for a single task within a planning agent response."""
+
+    title: str
+    description: str = ""
+    priority: str = Field(default="medium", pattern=r"^(low|medium|high)$")
+    affected_files: list[str] = Field(default_factory=list)
+    agent_hint: str = "claude"
+    estimated_complexity: str = "medium"
+    dependencies: list[int] = Field(default_factory=list)
+
+
+class PlanOutput(BaseModel):
+    """Expected structure of planning agent JSON output."""
+
+    plan_markdown: str = ""
+    subtasks: list[PlanTaskItem] = Field(default_factory=list)
+    file_list: list[str] = Field(default_factory=list)
 
 
 @dataclass
@@ -155,6 +179,9 @@ async def generate_plan(
 
     # 4. Parse structured output
     parsed = _parse_plan_output(response.content)
+
+    # 4b. Validate against PlanOutput schema (graceful — logs warning on failure)
+    parsed = validate_output(parsed, PlanOutput)
 
     plan_markdown = parsed.get("plan_markdown", "")
     raw_subtasks = parsed.get("subtasks", [])

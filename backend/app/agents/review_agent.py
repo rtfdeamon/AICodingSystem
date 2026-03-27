@@ -9,9 +9,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.base import AgentResponse
+from app.agents.base import AgentResponse, validate_output
 from app.agents.claude_agent import ClaudeAgent
 from app.agents.codex_agent import CodexAgent
 
@@ -33,6 +34,27 @@ Respond ONLY with valid JSON in this format:
   "summary": "Overall assessment..."
 }
 """
+
+
+# ── Pydantic output schema ────────────────────────────────────────────
+
+
+class ReviewFinding(BaseModel):
+    """Schema for a single finding in a review agent response."""
+
+    severity: str = Field(default="suggestion", pattern=r"^(critical|warning|suggestion|style)$")
+    line: int = 0
+    message: str = ""
+    suggestion: str = ""
+    file: str = ""
+
+
+class ReviewOutput(BaseModel):
+    """Expected structure of review agent JSON output."""
+
+    findings: list[ReviewFinding] = Field(default_factory=list)
+    comments: list[ReviewFinding] = Field(default_factory=list)
+    summary: str = ""
 
 
 @dataclass
@@ -152,6 +174,14 @@ async def _run_single_agent(
             temperature=0.1,
             max_tokens=8192,
         )
+
+        # Validate structured output (graceful — logs warning on failure)
+        try:
+            _raw = json.loads(response.content.strip().lstrip("`json\n").rstrip("`"))
+            _raw = validate_output(_raw, ReviewOutput)
+        except (json.JSONDecodeError, ValueError):
+            pass  # _parse_review_response handles malformed JSON already
+
         comments, summary = _parse_review_response(response.content)
         return AgentReview(
             agent_name=agent.name,

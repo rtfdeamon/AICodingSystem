@@ -39,6 +39,46 @@ alembic upgrade head
 
 For testing, SQLite in-memory databases are used automatically (no setup needed).
 
+## Environment Configuration
+
+The `ENVIRONMENT` variable controls runtime behaviour:
+
+| Value | Docs UI | Error detail | Use case |
+|-------|---------|--------------|----------|
+| `development` (default) | `/docs` + `/redoc` enabled | Full traceback in 500 responses | Local dev |
+| `staging` | Enabled | Full traceback | Pre-production testing |
+| `production` | Disabled | Sanitised `"Internal server error"` | Live deployment |
+
+Set it in your `.env` file or as a shell export:
+
+```bash
+ENVIRONMENT=development   # default
+ENVIRONMENT=production    # for deployed instances
+```
+
+## Code Splitting (Frontend)
+
+The frontend uses `React.lazy()` + `<Suspense>` for route-level code splitting. Every page component is loaded on demand:
+
+```tsx
+const KanbanBoard = lazy(() =>
+  import('@/components/kanban/KanbanBoard').then((m) => ({ default: m.KanbanBoard })),
+);
+```
+
+**How it works:**
+- `App.tsx` wraps all `<Routes>` in a `<Suspense fallback={<FullPageSpinner />}>`.
+- Each route component is a `lazy()` import that resolves to the named export.
+- Vite automatically creates separate chunks for each lazy import during `npm run build`.
+- An `<ErrorBoundary>` at the root catches chunk load failures.
+
+**To add a new lazy-loaded route:**
+1. Create your component in `frontend/src/components/<feature>/`.
+2. Add a `lazy()` import at the top of `App.tsx`.
+3. Add a `<Route>` inside the appropriate guard (`ProtectedRoute`, `RoleRoute`, or `PublicOnlyRoute`).
+
+Only the `AppShell` layout is loaded eagerly since it renders on every authenticated page.
+
 ## Code Quality Standards
 
 ### Backend
@@ -160,6 +200,35 @@ async def test_planning_agent(db_session):
 3. Register in `backend/app/agents/router.py`
 4. Add fallback behavior for missing API keys
 5. Write tests with mocked API responses
+
+### New Pydantic Output Schema for AI Agents
+
+Each AI agent should define a Pydantic `BaseModel` that describes the expected JSON structure of its response. This enables validation and type coercion before the pipeline consumes the output.
+
+1. Define the schema in the agent module (e.g. `backend/app/agents/my_agent.py`):
+
+```python
+from pydantic import BaseModel, Field
+
+class MyAgentOutput(BaseModel):
+    """Expected structure of my_agent JSON output."""
+    summary: str = ""
+    items: list[MyItem] = Field(default_factory=list)
+```
+
+2. After parsing the agent's raw JSON response, call `validate_output()`:
+
+```python
+from app.agents.base import validate_output
+
+parsed = json.loads(response.content)
+parsed = validate_output(parsed, MyAgentOutput)
+# parsed is now a validated dict (or the original dict if validation failed gracefully)
+```
+
+3. `validate_output()` calls `schema.model_validate(response)` and returns the coerced dict. On validation failure it logs a warning and returns the original dict unchanged — the pipeline continues without crashing.
+
+4. Write tests that verify both the happy path (valid JSON) and the fallback path (malformed JSON still produces a usable result).
 
 ### New Database Model
 

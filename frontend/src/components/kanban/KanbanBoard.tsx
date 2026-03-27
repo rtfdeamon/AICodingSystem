@@ -31,6 +31,7 @@ export function KanbanBoard() {
 
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [projectLoading, setProjectLoading] = useState(true);
   const [projectError, setProjectError] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export function KanbanBoard() {
         const res = await listProjects();
         if (cancelled) return;
         if (res.items.length > 0) {
+          setProjects(res.items);
           setCurrentProject(res.items[0]);
           fetchBoard(res.items[0].id);
           subscribeProject(res.items[0].id);
@@ -61,6 +63,7 @@ export function KanbanBoard() {
             description: 'Default project created automatically',
           });
           if (cancelled) return;
+          setProjects([newProject]);
           setCurrentProject(newProject);
           fetchBoard(newProject.id);
           subscribeProject(newProject.id);
@@ -87,6 +90,20 @@ export function KanbanBoard() {
       }
     };
   }, [currentProject, unsubscribeProject]);
+
+  const handleProjectChange = useCallback(
+    (projectId: string) => {
+      const selected = projects.find((p) => p.id === projectId);
+      if (!selected || selected.id === currentProject?.id) return;
+      if (currentProject) {
+        unsubscribeProject(currentProject.id);
+      }
+      setCurrentProject(selected);
+      fetchBoard(selected.id);
+      subscribeProject(selected.id);
+    },
+    [projects, currentProject, fetchBoard, subscribeProject, unsubscribeProject],
+  );
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -158,9 +175,25 @@ export function KanbanBoard() {
       {/* Board header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {currentProject?.name || 'Board'}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">Board</h1>
+            {projects.length > 1 && (
+              <select
+                value={currentProject?.id ?? ''}
+                onChange={(e) => handleProjectChange(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {projects.length <= 1 && currentProject && (
+              <span className="text-sm font-medium text-gray-600">{currentProject.name}</span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
             Drag tickets between columns to update their status
           </p>

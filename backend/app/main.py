@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import logging
+import traceback
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.v1.router import router as v1_router
 from app.config import settings
@@ -69,26 +72,70 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 # ── App factory ─────────────────────────────────────────────────────
 def create_app() -> FastAPI:
     """Build and return the configured :class:`FastAPI` application."""
+    is_production = settings.ENVIRONMENT.lower() == "production"
+
     app = FastAPI(
         title=settings.APP_NAME,
         version="0.1.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=None if is_production else "/docs",
+        redoc_url=None if is_production else "/redoc",
         lifespan=lifespan,
     )
 
-    # -- CORS --
-    app.add_middleware(
+    # -- Exception handlers ------------------------------------------------
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        """Return sanitised 500 in production; detailed error in development."""
+        if is_production:
+            logger.error("Unhandled exception: %s", exc, exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error"},
+            )
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": str(exc),
+                "traceback": traceback.format_exception(type(exc), exc, exc.__traceback__),
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        """Return field-level validation errors (safe in all environments)."""
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Validation error",
+                "errors": [
+                    {
+                        "loc": list(err.get("loc", [])),
+                        "msg": err.get("msg", ""),
+                        "type": err.get("type", ""),
+                    }
+                    for err in exc.errors()
+                ],
+            },
+        )
+
+    # -- Middleware --
+    # FastAPI applies middleware in reverse registration order (last added
+    # runs first on the inbound request).  We register them so the final
+    # execution order is:
+    #   Request -> CORS -> RateLimiter -> Logging -> route handler
+    # i.e. security (CORS, rate-limiting) runs before business-logic
+    # middleware (logging).
+    app.add_middleware(RequestLoggingMiddleware)       # 3rd added → innermost
+    app.add_middleware(RateLimiterMiddleware)           # 2nd added → middle
+    app.add_middleware(                                 # 1st added → outermost
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # -- Custom middleware (outermost added last) --
-    app.add_middleware(RateLimiterMiddleware)
-    app.add_middleware(RequestLoggingMiddleware)
 
     # -- Routers --
     app.include_router(v1_router)
