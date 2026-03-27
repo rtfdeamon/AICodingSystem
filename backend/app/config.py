@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     # ── GitHub OAuth (optional) ─────────────────────────────────────────
     GITHUB_CLIENT_ID: str | None = None
     GITHUB_CLIENT_SECRET: str | None = None
+    GITHUB_TOKEN: str | None = None
+    GITHUB_OWNER: str | None = None
+    GITHUB_REPO: str | None = None
 
     # ── n8n Workflow Engine (optional) ──────────────────────────────────
     N8N_BASE_URL: str | None = None

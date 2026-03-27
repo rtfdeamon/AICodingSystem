@@ -68,7 +68,7 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry
-│   ├── tests/                 # 831 tests, 96% coverage
+│   ├── tests/                 # 899 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -202,7 +202,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 831 tests
+.venv/bin/pytest -q                    # Run all 899 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -212,7 +212,7 @@ cd backend
 
 ```bash
 cd frontend
-npx vitest run       # Run 54 tests
+npx vitest run       # Run 98 tests
 npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
@@ -221,8 +221,9 @@ npm run build        # TypeScript build check
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 831 | 96% |
-| Frontend | 54 | - |
+| Backend | 899 | 96% |
+| Frontend | 98 | - |
+| E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |
 

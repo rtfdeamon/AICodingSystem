@@ -134,6 +134,43 @@ class GitHubClient:
             )
             return result
 
+    # ── diff ──────────────────────────────────────────────────────────
+
+    async def get_branch_diff(
+        self,
+        branch: str,
+        base: str = "main",
+        owner: str | None = None,
+        repo: str | None = None,
+    ) -> str | None:
+        """Return the raw unified diff between *base* and *branch*.
+
+        Uses the GitHub compare API with the ``.diff`` media type.
+        Falls back to ``settings.GITHUB_OWNER`` / ``settings.GITHUB_REPO``
+        when *owner* or *repo* are not provided.  Returns ``None`` when the
+        required configuration is missing or the API call fails.
+        """
+        owner = owner or settings.GITHUB_OWNER
+        repo = repo or settings.GITHUB_REPO
+        if not owner or not repo:
+            logger.debug("get_branch_diff skipped: GITHUB_OWNER/GITHUB_REPO not set")
+            return None
+
+        async with self._client() as client:
+            resp = await client.get(
+                f"/repos/{owner}/{repo}/compare/{base}...{branch}",
+                headers={"Accept": "application/vnd.github.diff"},
+            )
+            if resp.status_code != 200:
+                logger.warning(
+                    "GitHub compare API returned %d for %s...%s",
+                    resp.status_code,
+                    base,
+                    branch,
+                )
+                return None
+            return resp.text
+
     # ── pull requests ────────────────────────────────────────────────
 
     async def create_pull_request(

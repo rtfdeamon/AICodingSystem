@@ -4,10 +4,12 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   timeout: 30_000,
+
+  outputDir: "./test-results",
 
   use: {
     baseURL: process.env.BASE_URL || "http://localhost:3000",
@@ -22,17 +24,10 @@ export default defineConfig({
     },
   ],
 
-  /* Optionally start dev servers before tests */
-  // webServer: [
-  //   {
-  //     command: "cd ../backend && uvicorn app.main:app --host 0.0.0.0 --port 8001",
-  //     port: 8001,
-  //     reuseExistingServer: !process.env.CI,
-  //   },
-  //   {
-  //     command: "cd ../frontend && npm run dev",
-  //     port: 3000,
-  //     reuseExistingServer: !process.env.CI,
-  //   },
-  // ],
+  webServer: {
+    command: "cd ../frontend && npm run dev",
+    port: 3000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
 });

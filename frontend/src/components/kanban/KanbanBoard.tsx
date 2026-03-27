@@ -12,6 +12,7 @@ import {
 } from '@dnd-kit/core';
 import { Plus } from 'lucide-react';
 import { useKanbanStore } from '@/stores/kanbanStore';
+import { useWSStore } from '@/stores/wsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { KanbanColumn } from './KanbanColumn';
 import { TicketCard } from './TicketCard';
@@ -26,6 +27,7 @@ import type { Ticket, ColumnName } from '@/types';
 export function KanbanBoard() {
   const { columns, isLoading, error, fetchBoard, moveTicket } = useKanbanStore();
   const { user } = useAuth();
+  const { subscribeProject, unsubscribeProject } = useWSStore();
 
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -51,6 +53,7 @@ export function KanbanBoard() {
         if (res.items.length > 0) {
           setCurrentProject(res.items[0]);
           fetchBoard(res.items[0].id);
+          subscribeProject(res.items[0].id);
         } else {
           // Auto-create default project
           const newProject = await createProject({
@@ -60,6 +63,7 @@ export function KanbanBoard() {
           if (cancelled) return;
           setCurrentProject(newProject);
           fetchBoard(newProject.id);
+          subscribeProject(newProject.id);
         }
       } catch (err: unknown) {
         if (cancelled) return;
@@ -73,7 +77,16 @@ export function KanbanBoard() {
     }
     initProject();
     return () => { cancelled = true; };
-  }, [fetchBoard]);
+  }, [fetchBoard, subscribeProject]);
+
+  // Clean up WebSocket subscription on unmount
+  useEffect(() => {
+    return () => {
+      if (currentProject) {
+        unsubscribeProject(currentProject.id);
+      }
+    };
+  }, [currentProject, unsubscribeProject]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {

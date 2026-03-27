@@ -231,6 +231,20 @@ async def trigger_ai_review(
     # If no actual diff is available, note it in the review
     diff = diff_context or "No diff available. Review based on ticket description only."
 
+    # Attempt to fetch real diff from GitHub
+    if ticket.branch_name:
+        try:
+            from app.config import settings
+            from app.git.github_client import GitHubClient
+
+            token = settings.GITHUB_TOKEN
+            gh = GitHubClient(access_token=token)
+            real_diff = await gh.get_branch_diff(ticket.branch_name)
+            if real_diff:
+                diff = real_diff
+        except Exception as exc:
+            logger.warning("Could not fetch real diff for branch %s: %s", ticket.branch_name, exc)
+
     # Run AI review
     review_result = await review_code(
         diff=diff,
