@@ -1,5 +1,94 @@
 # TODO
 
+## Ревизия на 2026-03-28 v33 (автоматический проход; 52 best practices + efficiency analyzer + output grounding + agent memory + review scorer + 2534 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **2534 passed, 0 warnings** (было 2377, +157 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Code Efficiency Analyzer** (`app/quality/code_efficiency_analyzer.py`)
+  - Performance anti-pattern detection in AI-generated code
+  - Nested loop detection (O(n²) complexity warnings)
+  - String concatenation in loops detection
+  - Unbounded collection growth detection
+  - N+1 query pattern detection
+  - Missing generator usage (list vs generator comprehension)
+  - Repeated dictionary/attribute lookup detection
+  - Weighted penalty scoring (0-1 scale)
+  - Quality gate with configurable pass/warn/block thresholds
+  - Batch analysis with aggregated reporting
+  - Based on ENAMEL benchmark research showing eff@k (~0.45) << pass@k (>0.8) for SOTA models
+  - ~34 tests in `test_code_efficiency_analyzer.py`
+
+- [x] **Output Grounding Verifier** (`app/quality/output_grounding.py`)
+  - RAG-based output verification for AI-generated explanations and reviews
+  - Claim extraction from AI outputs (sentence-level decomposition)
+  - N-gram overlap scoring for evidence matching
+  - Keyword overlap scoring for claim-context matching
+  - Per-claim grounding classification: GROUNDED / PARTIALLY_GROUNDED / UNGROUNDED
+  - Citation verification against provided context documents
+  - Ungrounded claim flagging with detailed explanations
+  - Batch verification with aggregated metrics
+  - Based on Google Check Grounding API, deepset groundedness metrics, AWS RAG evaluation (2025-2026)
+  - ~42 tests in `test_output_grounding.py`
+
+- [x] **Agent Memory Manager** (`app/quality/agent_memory.py`)
+  - Persistent cross-session agent memory with four memory types: SHORT_TERM, LONG_TERM, EPISODIC, SEMANTIC
+  - Relevance-based retrieval with text similarity scoring
+  - Exponential time decay for memory relevance
+  - Importance scoring combining access frequency, recency, and explicit importance
+  - Context window budgeting (select most relevant memories within token budget)
+  - Conflict detection for contradictory memories
+  - Memory compression (merge similar entries above threshold)
+  - LRU / importance / hybrid eviction policies with configurable capacity
+  - Full audit trail of memory operations
+  - Based on AgentBench (2025), MINT multi-turn interaction research
+  - ~43 tests in `test_agent_memory.py`
+
+- [x] **Review Quality Scorer** (`app/quality/review_quality_scorer.py`)
+  - Automated evaluation of AI-generated code review quality
+  - Comment-level assessment: actionability, specificity, relevance scoring
+  - Coverage analysis: fraction of changed files addressed by review
+  - Constructiveness scoring: comments with solutions vs complaints
+  - False positive detection (vague, nitpick, style-only comments)
+  - Severity accuracy evaluation
+  - Batch review evaluation with aggregated metrics
+  - Quality gate with configurable thresholds
+  - Based on "Code Review Agent Benchmark" (arXiv:2603.23448, March 2026)
+  - ~38 tests in `test_review_quality_scorer.py`
+
+### Всего best practices: 52/52 (было 48)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-48 | (см. v32) | v24-v32 |
+| 49 | Code Efficiency Analyzer | v33 |
+| 50 | Output Grounding Verifier | v33 |
+| 51 | Agent Memory Manager | v33 |
+| 52 | Review Quality Scorer | v33 |
+
+### Результаты тестов
+- Backend: **2534 passed** (было 2377, +157 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- ENAMEL benchmark: "Efficiency pass rate eff@k significantly lower than correctness pass@k" (2025)
+- Google Cloud "Check Grounding API for RAG" — claim-level grounding verification (2025)
+- deepset "Measuring LLM Groundedness in RAG Systems" — faithfulness evaluation metrics (2025)
+- AWS "Reducing Hallucinations with Custom Intervention using Bedrock Agents" (2025)
+- "Code Review Agent Benchmark" (arXiv:2603.23448, March 2026)
+- AgentBench: Evaluating LLM-as-Agent (NeurIPS 2024, updated 2025)
+- MINT: Multi-Turn Interaction with Tools benchmark (2025)
+- JetBrains AI Pulse: 93% of developers use AI tools regularly (Jan 2026)
+- DarkReading "As Coders Adopt AI Agents, Security Pitfalls Lurk in 2026"
+- CSA "Understanding Security Risks in AI-Generated Code" (2025)
+
+---
+
 ## Ревизия на 2026-03-28 v32 (автоматический проход; 48 best practices + GRASP + license compliance + DualGauge + agentic trust + 2377 tests)
 
 Проверено командами:
