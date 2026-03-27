@@ -1,5 +1,84 @@
 # TODO
 
+## Ревизия на 2026-03-27 v24 (автоматический проход; all best practices implemented + observability + 1144 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1144 passed, 0 warnings** (было 1008, +136 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Review Context Engine** (`app/context/review_context.py`)
+  - Extracts symbols (functions, classes, imports) from diffs (Python + TypeScript)
+  - Cross-file symbol usage search (import, call, reference, definition)
+  - Historical PR lookup — finds past reviews that touched same files
+  - Builds enriched context prompt for review agents (coding standards, architecture notes, symbol usages, historical PRs)
+  - JSON serialization for API responses
+  - 27 tests in `test_review_context.py`
+
+- [x] **Negotiation Workflows** (`app/agents/negotiation.py`)
+  - Agents propose alternatives when developers reject findings
+  - Categorizes rejection reasons (performance, complexity, backward-compat, testing)
+  - Generates contextual alternative approaches with trade-offs and effort estimates
+  - Full lifecycle: create → generate alternatives → select/escalate/withdraw
+  - Tracks negotiation outcomes for learning (original vs alternative acceptance rates)
+  - 27 tests in `test_negotiation.py`
+
+- [x] **Self-Healing Tests** (`app/ci/self_healing.py`)
+  - Classifies test failures: selector_change, timing, api_change, env_config, dependency, logic_bug
+  - Regex-based pattern matching with confidence scoring
+  - Auto-heals environmental failures (selectors, timeouts, API mocks, env config)
+  - Skips logic bugs (assertion errors) — those require human intervention
+  - Generates healing prompts for AI agent to apply fixes
+  - 25 tests in `test_self_healing.py`
+
+- [x] **OpenTelemetry Semantic Conventions** (`app/observability/otel_conventions.py`)
+  - GenAI semantic convention attribute names (gen_ai.system, gen_ai.request.model, gen_ai.usage.*, etc.)
+  - Custom agent-specific attributes (gen_ai.agent.name, gen_ai.agent.action, gen_ai.agent.cost_usd)
+  - SpanAttributes builder with factory methods for agent calls and responses
+  - Span naming conventions: `"{operation} {system}/{model}"`, `"pipeline.{phase}"`
+  - Lightweight span recorder (OTel-compatible, no SDK dependency)
+  - 18 tests in `test_otel_conventions.py`
+
+- [x] **End-to-end Agent Tracing** (`app/observability/agent_tracing.py`)
+  - `AgentTracer` context manager for complete lifecycle tracing
+  - Phase-level tracing: prompt_construction, api_call, response_parsing, etc.
+  - Automatic span generation (root + phase spans) with parent-child relationships
+  - Token/cost recording, error tracking, metadata attachment
+  - Trace storage and retrieval (by ID, by agent name, recent traces)
+  - 13 tests in `test_agent_tracing.py`
+
+- [x] **Automated Evaluation Tests** (`app/observability/eval_tests.py`)
+  - Baseline registration for known prompts (expected structure, fields, length, patterns)
+  - Multi-dimension evaluation: structure, completeness, accuracy, consistency
+  - Quality scoring with weighted averages and pass/fail/degraded status
+  - Prompt hashing for stable baseline matching across runs
+  - Stats aggregation (pass rate, average score, per-dimension breakdown)
+  - 26 tests in `test_eval_tests.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все best practices реализованы
+
+Все 12 рекомендаций из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py` (symbol extraction, cross-file usages, historical PRs)
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py` + API endpoint
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py` (alternatives, trade-offs, outcome tracking)
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py` (source→test mapping)
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py` (failure classification, auto-heal environmental failures)
+6. [x] ~~**QA: AI-specific quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py` + 2 API endpoints
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning for AI code**~~ — **СДЕЛАНО v22-v23**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry semantic conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py` (GenAI semconv)
+10. [x] ~~**Observability: End-to-end agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py` (full lifecycle tracing)
+11. [x] ~~**Observability: Automated evaluation tests in CI/CD**~~ — **СДЕЛАНО v24**: `eval_tests.py` (baseline regression detection)
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py` (10 PII types, redaction, allowlist)
+
+---
+
 ## Ревизия на 2026-03-27 v23 (автоматический проход; quality modules + 6 best practices implemented + 1008 tests)
 
 Проверено командами:

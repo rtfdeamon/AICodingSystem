@@ -51,6 +51,8 @@ Stages marked with `*` are human gates requiring explicit approval.
 | SecurityAgent | SAST scanning and vulnerability detection | Claude/GPT-4 |
 | TestGenAgent | Auto-generates unit/integration tests | Claude/GPT-4 |
 | GeminiAgent | Alternative provider for any stage | Gemini Pro |
+| MetaReviewAgent | AI-on-AI review consolidation (3-layer review) | Claude |
+| NegotiationAgent | Proposes alternatives on developer pushback | N/A |
 | Router | Dynamic agent selection per task type | N/A |
 
 ## Project Structure
@@ -58,18 +60,19 @@ Stages marked with `*` are human gates requiring explicit approval.
 ```
 ├── backend/                    # FastAPI backend
 │   ├── app/
-│   │   ├── agents/            # AI agent implementations (13 modules)
+│   │   ├── agents/            # AI agent implementations (14 modules incl. negotiation)
 │   │   ├── api/v1/            # REST API routes (24 endpoints)
-│   │   ├── ci/                # CI/CD: builder, deployer, scanner, test runner
-│   │   ├── context/           # Code embeddings, AST parser, vector store
+│   │   ├── ci/                # CI/CD: builder, deployer, scanner, test runner, self-healing
+│   │   ├── context/           # Code embeddings, AST parser, vector store, review context
 │   │   ├── git/               # GitHub client, repo manager, diff parser
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
+│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests
 │   │   ├── quality/           # PII monitor, duplication, AI metrics, feedback
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry
-│   ├── tests/                 # 1008 tests, 96% coverage
+│   ├── tests/                 # 1144 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -245,7 +248,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 1008 tests
+.venv/bin/pytest -q                    # Run all 1144 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -260,11 +263,11 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary (v22)
+### Test Coverage Summary (v24)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 1008 | 96% |
+| Backend | 1144 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |

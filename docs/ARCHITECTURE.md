@@ -15,6 +15,7 @@ backend/app/
 ├── git/             # Git/GitHub operations
 ├── middleware/       # Cross-cutting concerns
 ├── models/          # Database models
+├── observability/   # OpenTelemetry, agent tracing, eval tests
 ├── quality/         # QA: PII monitoring, duplication, metrics, feedback
 ├── schemas/         # Request/response validation
 ├── services/        # Business logic layer
