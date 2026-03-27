@@ -57,6 +57,11 @@ workdir/
 
 # Runtime uploads (should use object storage in production)
 backend/uploads/
+uploads/
+
+# Playwright
+e2e/playwright-report/
+e2e/test-results/
 
 # Docs (keep spec)
 !TZ_AI_Coding_Pipeline.docx
