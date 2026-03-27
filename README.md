@@ -68,12 +68,12 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── git/               # GitHub client, repo manager, diff parser
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
-│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace
-│   │   ├── quality/           # PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier
+│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace, LLM judge
+│   │   ├── quality/           # PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone policy, self-correction
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 1692 tests, 96% coverage
+│   ├── tests/                 # 1978 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -275,9 +275,9 @@ npm run build        # TypeScript build check
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (32/32 Implemented)
+## Best Practices (36/36 Implemented)
 
-The system implements all 32 industry best practices for AI coding systems (2025-2026):
+The system implements all 36 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -313,6 +313,10 @@ The system implements all 32 industry best practices for AI coding systems (2025
 | 30 | LLM Cost Tracking & Budget Governance | `cost_tracker.py` | v28 |
 | 31 | Structured Output Schema Validation | `output_schema_validator.py` | v28 |
 | 32 | Code Attribution & Provenance | `code_attribution.py` | v28 |
+| 33 | Parallel Guardrail Orchestrator | `guardrail_orchestrator.py` | v29 |
+| 34 | LLM-as-Judge Evaluation | `llm_judge.py` | v29 |
+| 35 | Sensitive Code Zone Policy | `sensitive_zone_policy.py` | v29 |
+| 36 | Self-Correction Pipeline | `self_correction.py` | v29 |
 
 ## Monitoring
 

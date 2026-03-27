@@ -76,7 +76,7 @@ function RoleRoute({ allowed }: { allowed: UserRole[] }) {
     return <FullPageSpinner />;
   }
 
-  if (!allowed.includes(user.role)) {
+  if (user.role !== 'owner' && !allowed.includes(user.role)) {
     return <Navigate to="/board" replace />;
   }
 

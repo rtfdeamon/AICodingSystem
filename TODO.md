@@ -1,5 +1,100 @@
 # TODO
 
+## Ревизия на 2026-03-27 v29 (автоматический проход; 36 best practices + guardrail orchestrator + LLM judge + 1978 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1978 passed, 0 warnings** (было 1842, +136 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Parallel Guardrail Orchestrator** (`app/quality/guardrail_orchestrator.py`)
+  - Async-first parallel execution of independent safety checks
+  - Configurable concurrency with semaphore-based throttling
+  - Per-check timeouts with graceful degradation (TIMEOUT/ERROR states)
+  - Three aggregate policies: ALL_PASS, MAJORITY_PASS, NO_CRITICAL_FAIL
+  - Guardrail enable/disable and A/B rollout via percentage-based feature flags
+  - Latency tracking with p50/p95/p99 stats and speedup ratio reporting
+  - Sync fallback for non-async contexts
+  - ~35 tests in `test_guardrail_orchestrator.py`
+
+- [x] **LLM-as-Judge Evaluation** (`app/observability/llm_judge.py`)
+  - Multi-dimension rubric-based scoring (correctness, relevance, safety, style, completeness)
+  - Configurable weights per dimension with normalized weighted scores
+  - Pairwise A/B comparison with tie detection
+  - Auto-verdict: APPROVE/NEEDS_REVIEW/REJECT/ESCALATE with threshold tuning
+  - Safety-first escalation (low safety score → immediate ESCALATE)
+  - Judge calibration tracking: bias measurement and agreement with human reviewers
+  - Per-dimension analytics and approval rate tracking
+  - ~38 tests in `test_llm_judge.py`
+
+- [x] **Sensitive Code Zone Policy** (`app/quality/sensitive_zone_policy.py`)
+  - 6 built-in sensitive zones: auth, crypto, payment, PII, secrets, infrastructure
+  - Dual detection: file path patterns + content heuristic matching
+  - Four policy actions: BLOCK, REQUIRE_REVIEW, WARN, ALLOW
+  - Strictest-action precedence when multiple zones match
+  - Exemption management with expiration and zone-scoping
+  - Batch file checking for PR-level policy enforcement
+  - Line-number tracking for content-based detections
+  - ~35 tests in `test_sensitive_zone_policy.py`
+
+- [x] **Self-Correction Pipeline** (`app/quality/self_correction.py`)
+  - IssueDetector: 7 security patterns, 4 quality patterns, truncation + error handling checks
+  - Multi-stage correction: detect → diagnose → feedback → correct → validate
+  - Per-issue-type strategies with configurable retry limits and escalation thresholds
+  - Circuit breaker to prevent infinite correction loops
+  - Correction session tracking with resolved/remaining/new issue diffing
+  - Feedback template generation for effective re-prompting
+  - Success rate and avg-attempts-to-fix analytics
+  - ~28 tests in `test_self_correction.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все 36 best practices реализованы
+
+Все 36 рекомендаций из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py`
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py`
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py`
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py`
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py`
+6. [x] ~~**QA: AI quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py`
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning**~~ — **СДЕЛАНО v22**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py`
+10. [x] ~~**Observability: Agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py`
+11. [x] ~~**Observability: Automated eval tests**~~ — **СДЕЛАНО v24**: `eval_tests.py`
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py`
+13. [x] ~~**Prompt versioning & lifecycle**~~ — **СДЕЛАНО v25**: `prompt_versioning.py`
+14. [x] ~~**Semantic response cache**~~ — **СДЕЛАНО v25**: `semantic_cache.py`
+15. [x] ~~**Multi-model router with cost cascading**~~ — **СДЕЛАНО v25**: `model_router.py`
+16. [x] ~~**Hallucination detection pipeline**~~ — **СДЕЛАНО v25**: `hallucination_detector.py`
+17. [x] ~~**Token budget enforcer**~~ — **СДЕЛАНО v25**: `token_budget.py`
+18. [x] ~~**Shadow A/B testing**~~ — **СДЕЛАНО v25**: `shadow_testing.py`
+19. [x] ~~**Output drift detection**~~ — **СДЕЛАНО v25**: `drift_detector.py`
+20. [x] ~~**HITL escalation engine**~~ — **СДЕЛАНО v25**: `escalation_engine.py`
+21. [x] ~~**Prompt injection defense**~~ — **СДЕЛАНО v26**: `prompt_injection_guard.py`
+22. [x] ~~**Structured retry with backoff**~~ — **СДЕЛАНО v26**: `retry_strategy.py`
+23. [x] ~~**Immutable audit trail**~~ — **СДЕЛАНО v26**: `audit_trail.py`
+24. [x] ~~**AI code diff safety scanner**~~ — **СДЕЛАНО v26**: `diff_safety_scanner.py`
+25. [x] ~~**AI Bill of Materials (AI-BOM)**~~ — **СДЕЛАНО v27**: `ai_bom.py`
+26. [x] ~~**Hallucinated dependency detection**~~ — **СДЕЛАНО v27**: `dependency_verifier.py`
+27. [x] ~~**Spec-driven verification contracts**~~ — **СДЕЛАНО v27**: `spec_verifier.py`
+28. [x] ~~**Agent reasoning trace review**~~ — **СДЕЛАНО v27**: `reasoning_trace.py`
+29. [x] ~~**Context window management**~~ — **СДЕЛАНО v28**: `context_window_manager.py`
+30. [x] ~~**LLM cost tracking & budget governance**~~ — **СДЕЛАНО v28**: `cost_tracker.py`
+31. [x] ~~**Structured output schema validation**~~ — **СДЕЛАНО v28**: `output_schema_validator.py`
+32. [x] ~~**Code attribution & provenance tracking**~~ — **СДЕЛАНО v28**: `code_attribution.py`
+33. [x] ~~**Parallel guardrail orchestrator**~~ — **СДЕЛАНО v29**: `guardrail_orchestrator.py`
+34. [x] ~~**LLM-as-Judge evaluation**~~ — **СДЕЛАНО v29**: `llm_judge.py`
+35. [x] ~~**Sensitive code zone policy**~~ — **СДЕЛАНО v29**: `sensitive_zone_policy.py`
+36. [x] ~~**Self-correction pipeline**~~ — **СДЕЛАНО v29**: `self_correction.py`
+
+---
+
 ## Ревизия на 2026-03-27 v28 (автоматический проход; 32 best practices + context management + cost tracking + 1842 tests)
 
 Проверено командами:
