@@ -13,9 +13,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.coding_agent import CodeGenResult, generate_code
+from app.agents.meta_review_agent import MetaReviewResult, run_meta_review
 from app.agents.planning_agent import generate_plan
-from app.agents.security_agent import SecurityReport, analyze_security
+from app.agents.review_agent import review_code
+from app.agents.security_agent import analyze_security
 from app.agents.test_gen_agent import TestFile, generate_tests
+from app.ci.ci_feedback import (
+    CIFeedbackResult,
+    FeedbackLoopSummary,
+    feedback_summary_to_json,
+    run_ci_feedback_loop,
+)
+from app.ci.test_runner import TestSuiteResult, run_tests
 from app.context.engine import ContextEngine
 from app.git import repo_manager
 from app.models.ai_code_generation import AiCodeGeneration, CodeGenStatus
@@ -221,17 +230,24 @@ class PipelineOrchestrator:
         )
         return results
 
-    # ── Phase 3: Review ──────────────────────────────────────────────
+    # ── Phase 3: Review (Three-Layer Architecture) ─────────────────
 
-    async def run_review_phase(self, ticket_id: uuid.UUID) -> SecurityReport:
-        """Run parallel AI reviews (security, quality) on the generated code.
+    async def run_review_phase(
+        self, ticket_id: uuid.UUID
+    ) -> dict[str, Any]:
+        """Run three-layer AI review on the generated code.
+
+        Layer 1: Specialist agents (code quality + security) in parallel
+        Layer 2: Meta-review agent consolidates and de-noises findings
+        Layer 3: Human review gate (handled by the Kanban UI)
 
         Steps:
         1. Get the diff between the feature branch and main.
-        2. Run security analysis (AI + SAST).
-        3. Log findings and return the security report.
+        2. Layer 1: Run code review + security analysis in parallel.
+        3. Layer 2: Meta-review consolidates findings.
+        4. Return combined report for human review (Layer 3).
         """
-        await self._log_progress(ticket_id, "review", "Starting AI review phase")
+        await self._log_progress(ticket_id, "review", "Starting three-layer AI review")
         ticket = await self._get_ticket(ticket_id)
         repo_path = self._repo_path(ticket.project_id)
 
@@ -248,7 +264,7 @@ class PipelineOrchestrator:
 
         # Read changed file contents for security analysis
         file_contents: dict[str, str] = {}
-        for rel_path in changed_files[:20]:  # Limit to 20 files
+        for rel_path in changed_files[:20]:
             full_path = repo_path / rel_path
             if full_path.is_file():
                 with contextlib.suppress(OSError):
@@ -257,7 +273,22 @@ class PipelineOrchestrator:
                         errors="replace",
                     )[:5_000]
 
-        report = await analyze_security(
+        ticket_desc = f"Title: {ticket.title}\n"
+        if ticket.description:
+            ticket_desc += f"Description: {ticket.description}\n"
+
+        # ── Layer 1: Parallel specialist reviews ──────────────────
+        import asyncio
+
+        await self._log_progress(ticket_id, "review", "Layer 1: Running specialist agents")
+
+        layer1_code_review_task = review_code(
+            diff=diff,
+            ticket_description=ticket_desc,
+            db=self._db,
+            ticket_id=ticket.id,
+        )
+        layer1_security_task = analyze_security(
             diff=diff,
             file_contents=file_contents,
             repo_path=repo_path,
@@ -266,23 +297,67 @@ class PipelineOrchestrator:
             ticket_id=ticket.id,
         )
 
+        code_review_result, security_report = await asyncio.gather(
+            layer1_code_review_task,
+            layer1_security_task,
+        )
+
         await self._log_progress(
             ticket_id,
             "review",
-            f"Review complete — {report.total_findings} finding(s)",
-            {"severity": report.severity_counts},
+            f"Layer 1 complete — {len(code_review_result.comments)} code findings, "
+            f"{security_report.total_findings} security findings",
         )
-        return report
 
-    # ── Phase 4: Testing ─────────────────────────────────────────────
+        # ── Layer 2: Meta-review ──────────────────────────────────
+        await self._log_progress(ticket_id, "review", "Layer 2: Running meta-review")
+
+        meta_result: MetaReviewResult = await run_meta_review(
+            diff=diff,
+            layer1_result=code_review_result,
+            db=self._db,
+            ticket_id=ticket.id,
+        )
+
+        await self._log_progress(
+            ticket_id,
+            "review",
+            f"Layer 2 complete — verdict: {meta_result.verdict} "
+            f"(confidence: {meta_result.confidence:.0%}), "
+            f"filtered {meta_result.filtered_count} false positive(s)",
+        )
+
+        # Combine results
+        result = {
+            "layer1_code_comments": len(code_review_result.comments),
+            "layer1_security_findings": security_report.total_findings,
+            "layer1_severity": security_report.severity_counts,
+            "layer2_verdict": meta_result.verdict,
+            "layer2_confidence": meta_result.confidence,
+            "layer2_consolidated_comments": len(meta_result.consolidated_comments),
+            "layer2_filtered_count": meta_result.filtered_count,
+            "layer2_missed_issues": meta_result.missed_issues,
+            "total_cost_usd": (
+                code_review_result.total_cost_usd + meta_result.cost_usd
+            ),
+        }
+
+        await self._log_progress(
+            ticket_id, "review", "Three-layer review complete", result
+        )
+        return result
+
+    # ── Phase 4: Testing (with CI Feedback Loop) ───────────────────
 
     async def run_testing_phase(self, ticket_id: uuid.UUID) -> dict[str, Any]:
-        """Trigger CI/CD, generate AI tests, and collect results.
+        """Generate tests, run CI, and self-correct on failures.
 
         Steps:
         1. Generate AI test files.
         2. Commit tests to the feature branch.
-        3. Trigger the build+test workflow via n8n.
+        3. Run local tests (inner loop).
+        4. If tests fail, run CI feedback loop for self-correction.
+        5. Trigger the full CI/CD workflow via n8n (outer loop).
         """
         await self._log_progress(ticket_id, "testing", "Starting testing phase")
         ticket = await self._get_ticket(ticket_id)
@@ -326,7 +401,82 @@ class PipelineOrchestrator:
                 files=test_paths,
             )
 
-        # Trigger CI/CD
+        # ── Inner loop: Run local tests ──────────────────────────
+        await self._log_progress(ticket_id, "testing", "Running local tests (inner loop)")
+
+        feedback_summary: FeedbackLoopSummary | None = None
+        try:
+            test_result: TestSuiteResult = await run_tests(
+                project_path=str(repo_path),
+                test_type="unit",
+                branch=ticket.branch_name,
+            )
+
+            if not test_result.passed:
+                await self._log_progress(
+                    ticket_id,
+                    "testing",
+                    f"Tests failed ({test_result.failed} failures). "
+                    f"Starting CI feedback loop.",
+                )
+
+                # Define fix callback for the feedback loop
+                async def _fix_callback(
+                    prompt: str, iteration: int
+                ) -> CIFeedbackResult:
+                    # Re-invoke coding agent with error context
+                    try:
+                        fix_results = await generate_code(
+                            subtask={
+                                "title": f"CI fix iteration {iteration}",
+                                "description": prompt,
+                            },
+                            subtask_index=0,
+                            plan=await self._get_latest_plan(ticket_id),
+                            project_id=ticket.project_id,
+                            context_engine=self._context,
+                            repo_path=repo_path,
+                            db=self._db,
+                            ticket_id=ticket.id,
+                            branch_name=ticket.branch_name,
+                        )
+                        return CIFeedbackResult(
+                            iteration=iteration,
+                            fixed=True,
+                            fix_description=f"Applied fix: {fix_results.files_changed}",
+                            files_changed=fix_results.files_changed or [],
+                            cost_usd=fix_results.cost_usd,
+                        )
+                    except Exception as exc:
+                        return CIFeedbackResult(
+                            iteration=iteration,
+                            fixed=False,
+                            fix_description=f"Fix attempt failed: {exc}",
+                        )
+
+                feedback_summary = await run_ci_feedback_loop(
+                    test_result=test_result,
+                    diff=diff,
+                    fix_callback=_fix_callback,
+                    db=self._db,
+                    ticket_id=ticket.id,
+                )
+
+                if feedback_summary.escalated_to_human:
+                    await self._log_progress(
+                        ticket_id,
+                        "testing",
+                        "CI feedback loop exhausted — escalating to human",
+                        feedback_summary_to_json(feedback_summary),
+                    )
+            else:
+                await self._log_progress(
+                    ticket_id, "testing", "Local tests passed"
+                )
+        except Exception as exc:
+            logger.warning("Local test run failed for ticket %s: %s", ticket_id, exc)
+
+        # ── Outer loop: Trigger full CI/CD ───────────────────────
         ci_result = await trigger_workflow(
             "build_test",
             {
@@ -336,11 +486,14 @@ class PipelineOrchestrator:
             },
         )
 
-        summary = {
+        summary: dict[str, Any] = {
             "test_files_generated": len(test_files),
             "test_types": list({tf.test_type for tf in test_files}),
             "ci_triggered": ci_result.get("status") != "error",
         }
+
+        if feedback_summary:
+            summary["ci_feedback_loop"] = feedback_summary_to_json(feedback_summary)
 
         await self._log_progress(ticket_id, "testing", "Testing phase complete", summary)
         return summary

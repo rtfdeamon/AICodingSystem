@@ -500,6 +500,20 @@ async def test_run_review_phase_success(
     mock_report.total_findings = 2
     mock_report.severity_counts = {"high": 1, "low": 1}
 
+    mock_review_result = MagicMock()
+    mock_review_result.comments = []
+    mock_review_result.summary = "OK"
+    mock_review_result.agent_reviews = []
+    mock_review_result.total_cost_usd = 0.0
+
+    mock_meta_result = MagicMock()
+    mock_meta_result.verdict = "approve"
+    mock_meta_result.confidence = 0.9
+    mock_meta_result.consolidated_comments = []
+    mock_meta_result.filtered_count = 0
+    mock_meta_result.missed_issues = []
+    mock_meta_result.cost_usd = 0.0
+
     with (
         patch(
             "app.workflows.pipeline_orchestrator.repo_manager",
@@ -509,6 +523,16 @@ async def test_run_review_phase_success(
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_analyze,
+        patch(
+            "app.workflows.pipeline_orchestrator.review_code",
+            new_callable=AsyncMock,
+            return_value=mock_review_result,
+        ),
+        patch(
+            "app.workflows.pipeline_orchestrator.run_meta_review",
+            new_callable=AsyncMock,
+            return_value=mock_meta_result,
+        ),
         patch("app.services.websocket_manager.ws_manager") as mock_ws,
     ):
         mock_repo.get_diff = AsyncMock(return_value="diff content")
@@ -519,7 +543,9 @@ async def test_run_review_phase_success(
 
         result = await orchestrator.run_review_phase(ticket.id)
 
-    assert result == mock_report
+    assert isinstance(result, dict)
+    assert result["layer1_security_findings"] == 2
+    assert result["layer2_verdict"] == "approve"
     mock_analyze.assert_awaited_once()
     # Verify file_contents were read and passed to analyze_security
     call_kwargs = mock_analyze.call_args[1]
@@ -581,6 +607,20 @@ async def test_run_review_phase_limits_files_to_twenty(
     mock_report.total_findings = 0
     mock_report.severity_counts = {}
 
+    mock_review_result = MagicMock()
+    mock_review_result.comments = []
+    mock_review_result.summary = "All good"
+    mock_review_result.agent_reviews = []
+    mock_review_result.total_cost_usd = 0.0
+
+    mock_meta_result = MagicMock()
+    mock_meta_result.verdict = "approve"
+    mock_meta_result.confidence = 0.9
+    mock_meta_result.consolidated_comments = []
+    mock_meta_result.filtered_count = 0
+    mock_meta_result.missed_issues = []
+    mock_meta_result.cost_usd = 0.0
+
     with (
         patch(
             "app.workflows.pipeline_orchestrator.repo_manager",
@@ -590,6 +630,16 @@ async def test_run_review_phase_limits_files_to_twenty(
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_analyze,
+        patch(
+            "app.workflows.pipeline_orchestrator.review_code",
+            new_callable=AsyncMock,
+            return_value=mock_review_result,
+        ),
+        patch(
+            "app.workflows.pipeline_orchestrator.run_meta_review",
+            new_callable=AsyncMock,
+            return_value=mock_meta_result,
+        ),
         patch("app.services.websocket_manager.ws_manager") as mock_ws,
     ):
         mock_repo.get_diff = AsyncMock(return_value="diff")
@@ -626,6 +676,20 @@ async def test_run_review_phase_skips_unreadable_files(
     mock_report.total_findings = 0
     mock_report.severity_counts = {}
 
+    mock_review_result = MagicMock()
+    mock_review_result.comments = []
+    mock_review_result.summary = "OK"
+    mock_review_result.agent_reviews = []
+    mock_review_result.total_cost_usd = 0.0
+
+    mock_meta_result = MagicMock()
+    mock_meta_result.verdict = "approve"
+    mock_meta_result.confidence = 0.9
+    mock_meta_result.consolidated_comments = []
+    mock_meta_result.filtered_count = 0
+    mock_meta_result.missed_issues = []
+    mock_meta_result.cost_usd = 0.0
+
     with (
         patch(
             "app.workflows.pipeline_orchestrator.repo_manager",
@@ -635,6 +699,16 @@ async def test_run_review_phase_skips_unreadable_files(
             new_callable=AsyncMock,
             return_value=mock_report,
         ) as mock_analyze,
+        patch(
+            "app.workflows.pipeline_orchestrator.review_code",
+            new_callable=AsyncMock,
+            return_value=mock_review_result,
+        ),
+        patch(
+            "app.workflows.pipeline_orchestrator.run_meta_review",
+            new_callable=AsyncMock,
+            return_value=mock_meta_result,
+        ),
         patch("app.services.websocket_manager.ws_manager") as mock_ws,
     ):
         mock_repo.get_diff = AsyncMock(return_value="diff")
@@ -645,7 +719,8 @@ async def test_run_review_phase_skips_unreadable_files(
 
         result = await orchestrator.run_review_phase(ticket.id)
 
-    assert result == mock_report
+    assert isinstance(result, dict)
+    assert result["layer2_verdict"] == "approve"
     call_kwargs = mock_analyze.call_args[1]
     assert call_kwargs["file_contents"] == {}
 

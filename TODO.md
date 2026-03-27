@@ -1,5 +1,58 @@
 # TODO
 
+## Ревизия на 2026-03-27 v22 (автоматический проход; three-layer review + CI feedback loops + 943 tests + best practices backlog)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **943 passed, 0 warnings** (было 907, +36 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Three-layer review architecture (AI-on-AI reviews)**
+  - Layer 1: Specialist AI agents (code review + security) run in parallel
+  - Layer 2: Meta-review agent (`meta_review_agent.py`) consolidates, de-noises, and prioritises Layer 1 findings
+  - Layer 3: Human review gate (Kanban UI — already existed)
+  - Meta-reviewer filters false positives, validates severity, detects missed issues
+  - Produces verdict with confidence score (approve/request_changes/needs_discussion)
+  - Graceful fallback when Claude API unavailable — passes through Layer 1 results
+  - Updated `trigger_ai_review` API endpoint to use 3-layer flow
+  - Updated `PipelineOrchestrator.run_review_phase()` to run all three layers
+  - 20 new tests in `test_meta_review_agent.py`
+
+- [x] **CI feedback loops (inner/outer loop pattern)**
+  - Inner loop: Fast local test execution before push
+  - Outer loop: Full CI/CD pipeline via n8n
+  - Self-correction: When tests fail, builds targeted fix prompt with failure details
+  - Progressive context: Each retry includes all prior error messages
+  - Iteration guardrails: Max 3 fix attempts before escalating to human
+  - Test failure parser: Extracts structured info from JSON reports and log output
+  - `ci_feedback.py`: `parse_test_failures()`, `build_fix_prompt()`, `run_ci_feedback_loop()`
+  - Updated `PipelineOrchestrator.run_testing_phase()` to use feedback loop
+  - 16 new tests in `test_ci_feedback.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Что осталось открытым (best practices backlog)
+
+Рекомендации из индустрии (2025-2026 best practices для AI coding систем):
+
+1. [ ] **Review: Context engine** — собирать cross-repo usages, historical PRs, architecture docs как контекст для ревью
+2. [ ] **Review: Developer feedback loop** — трекать какие findings принимают/отклоняют для fine-tuning промптов
+3. [ ] **Review: Negotiation workflows** — agents могут предлагать альтернативы при pushback от разработчика
+4. [ ] **CI/CD: Intelligent test selection** — предсказывать какие тесты релевантны для каждого изменения (40% ускорение)
+5. [ ] **CI/CD: Self-healing tests** — агенты автоматически чинят сломанные тесты при изменениях UI/env
+6. [ ] **QA: AI-specific quality metrics dashboard** — AI-attributed regression rate, defect density, merge confidence
+7. [ ] **QA: Duplication detection** — мониторинг дублирования в AI-generated коде (8x increase vs human)
+8. [ ] **QA: Security scanning for AI code** — dedicated security анализ для AI-generated кода (322% больше privilege escalation)
+9. [ ] **Observability: OpenTelemetry semantic conventions** — GenAI semantic conventions для трейсинга
+10. [ ] **Observability: End-to-end agent tracing** — полные execution traces для каждого agent run
+11. [ ] **Observability: Automated evaluation tests in CI/CD** — baseline regression detection для agent outputs
+12. [ ] **Observability: PII leakage monitoring** — валидация что agent outputs не утекают PII
+
+---
+
 ## Ревизия на 2026-03-27 v21 (автоматический проход; security hardening + tech debt fixes + 907 tests + config validation + full documentation)
 
 Проверено командами:

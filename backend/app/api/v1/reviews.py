@@ -77,6 +77,7 @@ class AiReviewTriggerResponse(BaseModel):
     comment_count: int
     total_cost_usd: float
     agent_reviews: list[dict[str, Any]]
+    meta_review: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +207,7 @@ async def trigger_ai_review(
 
     Runs Claude and Codex in parallel to review the ticket's code diff.
     """
+    from app.agents.meta_review_agent import meta_review_result_to_json, run_meta_review
     from app.agents.review_agent import review_code, review_result_to_json
 
     # Get ticket
@@ -253,16 +255,25 @@ async def trigger_ai_review(
         ticket_id=ticket_id,
     )
 
-    # Determine decision based on findings
-    critical_count = sum(1 for c in review_result.comments if c.severity == "critical")
-    warning_count = sum(1 for c in review_result.comments if c.severity == "warning")
+    # Layer 2: Meta-review (AI-on-AI review)
+    meta_result = await run_meta_review(
+        diff=diff,
+        layer1_result=review_result,
+        db=db,
+        ticket_id=ticket_id,
+    )
 
-    if critical_count > 0 or warning_count > 3:
-        decision = ReviewDecision.CHANGES_REQUESTED
-    else:
-        decision = ReviewDecision.APPROVED
+    # Use meta-review verdict for decision (Layer 2 overrides Layer 1 heuristics)
+    verdict_map = {
+        "approve": ReviewDecision.APPROVED,
+        "request_changes": ReviewDecision.CHANGES_REQUESTED,
+        "needs_discussion": ReviewDecision.CHANGES_REQUESTED,
+    }
+    decision = verdict_map.get(meta_result.verdict, ReviewDecision.CHANGES_REQUESTED)
 
-    # Serialize inline comments
+    # Use consolidated comments from meta-review if available,
+    # otherwise fall back to Layer 1 comments
+    final_comments = meta_result.consolidated_comments or review_result.comments
     inline_comments = [
         {
             "file": c.file,
@@ -270,16 +281,25 @@ async def trigger_ai_review(
             "comment": c.comment,
             "severity": c.severity,
         }
-        for c in review_result.comments
+        for c in final_comments
     ]
+
+    total_cost = review_result.total_cost_usd + meta_result.cost_usd
+
+    # Build combined summary
+    combined_summary = review_result.summary
+    if meta_result.summary:
+        combined_summary += f"\n\n[Meta-Review] {meta_result.summary}"
+    if meta_result.missed_issues:
+        combined_summary += "\n\n[Missed Issues] " + "; ".join(meta_result.missed_issues)
 
     # Persist AI review
     review = Review(
         ticket_id=ticket_id,
         reviewer_type=ReviewerType.AI_AGENT,
-        agent_name="multi-agent",
+        agent_name="multi-agent-3layer",
         decision=decision,
-        body=review_result.summary,
+        body=combined_summary,
         inline_comments=inline_comments if inline_comments else None,
     )
     db.add(review)
@@ -287,19 +307,24 @@ async def trigger_ai_review(
     await db.refresh(review)
 
     result_json = review_result_to_json(review_result)
+    meta_json = meta_review_result_to_json(meta_result)
 
     logger.info(
-        "AI review for ticket %s: decision=%s comments=%d cost=$%.4f",
+        "AI review (3-layer) for ticket %s: verdict=%s confidence=%.2f "
+        "comments=%d filtered=%d cost=$%.4f",
         ticket_id,
-        decision.value,
-        len(review_result.comments),
-        review_result.total_cost_usd,
+        meta_result.verdict,
+        meta_result.confidence,
+        len(final_comments),
+        meta_result.filtered_count,
+        total_cost,
     )
 
     return AiReviewTriggerResponse(
         review_id=review.id,
-        summary=review_result.summary,
-        comment_count=len(review_result.comments),
-        total_cost_usd=review_result.total_cost_usd,
+        summary=combined_summary,
+        comment_count=len(final_comments),
+        total_cost_usd=total_cost,
         agent_reviews=result_json["agent_reviews"],
+        meta_review=meta_json,
     )

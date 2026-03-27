@@ -315,6 +315,65 @@ curl -s -X POST http://localhost:8001/api/v1/tickets/{ticket_id}/move \
 
 ---
 
+## Reviews (Three-Layer Architecture)
+
+The review system uses a three-layer AI-on-AI architecture:
+- **Layer 1**: Specialist agents (code quality + security) run in parallel
+- **Layer 2**: Meta-review agent consolidates, filters false positives, validates severity
+- **Layer 3**: Human reviewer makes final decision via the Kanban UI
+
+### List Reviews
+```
+GET /tickets/{ticket_id}/reviews
+Authorization: Bearer <token>
+
+Response 200: array of review objects
+```
+
+### Submit Human Review
+```
+POST /tickets/{ticket_id}/reviews
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "decision": "approved|rejected|changes_requested",
+  "body": "Review comments...",
+  "inline_comments": [
+    {"file": "main.py", "line": 42, "comment": "Fix null check", "severity": "warning"}
+  ]
+}
+
+Response 201: review object
+```
+
+### Trigger AI Review (Three-Layer)
+```
+POST /tickets/{ticket_id}/reviews/ai-trigger
+Authorization: Bearer <token>
+
+Response 201:
+{
+  "review_id": "uuid",
+  "summary": "Layer 1 + Layer 2 consolidated summary",
+  "comment_count": 5,
+  "total_cost_usd": 0.03,
+  "agent_reviews": [
+    {"agent_name": "claude", "model_id": "...", "summary": "...", "comment_count": 3}
+  ],
+  "meta_review": {
+    "verdict": "approve|request_changes|needs_discussion",
+    "confidence": 0.85,
+    "consolidated_comments": [...],
+    "filtered_count": 2,
+    "missed_issues": ["Missing error handling in..."],
+    "cost_usd": 0.01
+  }
+}
+```
+
+---
+
 ## Comments
 
 ### Add Comment to Ticket

@@ -111,17 +111,20 @@ Ticket Created
 └──────────┬──────────┘
            ▼
 ┌─────────────────────┐
-│  ReviewAgent         │  Automated code review with inline findings
-│  + SecurityAgent     │  SAST scanning, vulnerability detection
-│  + TestGenAgent      │  Auto-generates test cases
+│  Three-Layer Review  │
+│  Layer 1: Specialist │  ReviewAgent + SecurityAgent run in parallel
+│  agents (parallel)   │  Inline findings + SAST scanning
+│  Layer 2: Meta-      │  MetaReviewAgent consolidates, filters
+│  review (AI-on-AI)   │  false positives, validates severity
+│  Layer 3: Human      │  Developer reviews consolidated findings
+│  review gate         │
 └──────────┬──────────┘
            ▼
 ┌─────────────────────┐
-│  Human Review Gate   │  Developer reviews AI code + AI review findings
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│  CI/CD Pipeline      │  Build, test, deploy to staging
+│  CI/CD + Feedback    │  Build, test, deploy to staging
+│  Inner loop: local   │  Fast validation (lint, type, unit tests)
+│  tests + self-fix    │  Auto-fix up to 3 iterations on failure
+│  Outer loop: full CI │  Full pipeline via n8n workflows
 │  (Builder/Deployer)  │  Health checks, canary promotion
 └──────────┬──────────┘
            ▼

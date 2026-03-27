@@ -180,6 +180,19 @@ async def test_trigger_ai_review(
 
     fake_result = FakeReviewResult()
 
+    @dataclass
+    class FakeMetaResult:
+        verdict: str = "approve"
+        confidence: float = 0.9
+        consolidated_comments: list = field(default_factory=list)
+        filtered_count: int = 0
+        missed_issues: list = field(default_factory=list)
+        summary: str = ""
+        cost_usd: float = 0.0
+        latency_ms: int = 0
+
+    fake_meta = FakeMetaResult()
+
     with (
         patch(
             "app.agents.review_agent.review_code",
@@ -190,6 +203,15 @@ async def test_trigger_ai_review(
             "app.agents.review_agent.review_result_to_json",
             return_value={"agent_reviews": [{"agent": "test", "summary": "ok"}]},
         ),
+        patch(
+            "app.agents.meta_review_agent.run_meta_review",
+            new_callable=AsyncMock,
+            return_value=fake_meta,
+        ),
+        patch(
+            "app.agents.meta_review_agent.meta_review_result_to_json",
+            return_value={"verdict": "approve", "confidence": 0.9},
+        ),
     ):
         resp = await async_client.post(
             f"/api/v1/tickets/{ticket_id}/reviews/ai-trigger",
@@ -198,7 +220,7 @@ async def test_trigger_ai_review(
 
     assert resp.status_code == 201
     data = resp.json()
-    assert data["summary"] == "All good"
+    assert "All good" in data["summary"]
     assert data["comment_count"] == 1
     assert data["total_cost_usd"] == 0.01
 
