@@ -69,11 +69,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
 │   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection
-│   │   ├── quality/           # PII, hallucination, prompt versioning, token budget, escalation, cache
+│   │   │   ├── quality/           # PII, hallucination, prompt versioning, injection guard, diff scanner
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
-│   │   └── workflows/         # Pipeline orchestrator, state machine, retry
-│   ├── tests/                 # 1425 tests, 96% coverage
+│   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
+│   ├── tests/                 # 1553 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -249,7 +249,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 1425 tests
+.venv/bin/pytest -q                    # Run all 1553 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -264,20 +264,20 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary (v25)
+### Test Coverage Summary (v26)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 1425 | 96% |
+| Backend | 1553 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (20/20 Implemented)
+## Best Practices (24/24 Implemented)
 
-The system implements all 20 industry best practices for AI coding systems (2025-2026):
+The system implements all 24 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -301,6 +301,10 @@ The system implements all 20 industry best practices for AI coding systems (2025
 | 18 | Shadow A/B Testing | `shadow_testing.py` | v25 |
 | 19 | Output Drift Detection | `drift_detector.py` | v25 |
 | 20 | HITL Escalation Engine | `escalation_engine.py` | v25 |
+| 21 | Prompt Injection Defense | `prompt_injection_guard.py` | v26 |
+| 22 | Structured Retry with Backoff | `retry_strategy.py` | v26 |
+| 23 | Immutable Audit Trail | `audit_trail.py` | v26 |
+| 24 | AI Code Diff Safety Scanner | `diff_safety_scanner.py` | v26 |
 
 ## Monitoring
 

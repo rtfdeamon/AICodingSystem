@@ -1,5 +1,80 @@
 # TODO
 
+## Ревизия на 2026-03-27 v26 (автоматический проход; 24 best practices + prompt injection defense + audit trail + 1553 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1553 passed, 0 warnings** (было 1425, +128 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Prompt Injection Defense** (`app/quality/prompt_injection_guard.py`)
+  - Detects 6 injection categories: system override, role manipulation, instruction injection, delimiter injection, encoding attacks, context switching
+  - Regex-based pattern matching with risk scoring (0-100)
+  - Base64 encoding attack detection (decodes and checks for suspicious keywords)
+  - Allowlist support for known safe patterns
+  - Scan history and aggregate statistics
+  - ~34 tests in `test_prompt_injection_guard.py`
+
+- [x] **Structured Retry with Backoff** (`app/workflows/retry_strategy.py`)
+  - Exponential backoff with jitter for LLM API calls
+  - Circuit breaker pattern (closed/open/half-open states)
+  - Per-error-type retry configuration (rate limits get 2x delay, auth errors not retried)
+  - Error classification heuristics (rate limit, server error, timeout, auth, invalid request)
+  - Attempt recording and aggregate statistics
+  - ~27 tests in `test_retry_strategy.py`
+
+- [x] **Immutable Audit Trail** (`app/observability/audit_trail.py`)
+  - Hash-chain audit logging (SHA-256) for tamper detection
+  - 10 auditable actions: agent invoked, code generated, review completed, etc.
+  - Compliance querying by time range, actor, action type, severity
+  - Integrity verification (detects modified or reordered entries)
+  - Export capability for compliance audits
+  - ~31 tests in `test_audit_trail.py`
+
+- [x] **AI Code Diff Safety Scanner** (`app/quality/diff_safety_scanner.py`)
+  - Scans unified diffs for dangerous operations, security anti-patterns, hardcoded secrets
+  - Dependency tampering detection (suspicious URLs in requirements.txt/package.json)
+  - Privilege escalation patterns (sudo, chmod 777, setuid)
+  - Data exfiltration patterns (outbound POST with encoded data)
+  - Risk scoring with per-type weights, allowlist support
+  - ~36 tests in `test_diff_safety_scanner.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все 24 best practices реализованы
+
+Все 24 рекомендации из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py`
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py`
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py`
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py`
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py`
+6. [x] ~~**QA: AI quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py`
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning**~~ — **СДЕЛАНО v22**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py`
+10. [x] ~~**Observability: Agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py`
+11. [x] ~~**Observability: Automated eval tests**~~ — **СДЕЛАНО v24**: `eval_tests.py`
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py`
+13. [x] ~~**Prompt versioning & lifecycle**~~ — **СДЕЛАНО v25**: `prompt_versioning.py`
+14. [x] ~~**Semantic response cache**~~ — **СДЕЛАНО v25**: `semantic_cache.py`
+15. [x] ~~**Multi-model router with cost cascading**~~ — **СДЕЛАНО v25**: `model_router.py`
+16. [x] ~~**Hallucination detection pipeline**~~ — **СДЕЛАНО v25**: `hallucination_detector.py`
+17. [x] ~~**Token budget enforcer**~~ — **СДЕЛАНО v25**: `token_budget.py`
+18. [x] ~~**Shadow A/B testing**~~ — **СДЕЛАНО v25**: `shadow_testing.py`
+19. [x] ~~**Output drift detection**~~ — **СДЕЛАНО v25**: `drift_detector.py`
+20. [x] ~~**HITL escalation engine**~~ — **СДЕЛАНО v25**: `escalation_engine.py`
+21. [x] ~~**Prompt injection defense**~~ — **СДЕЛАНО v26**: `prompt_injection_guard.py`
+22. [x] ~~**Structured retry with backoff**~~ — **СДЕЛАНО v26**: `retry_strategy.py`
+23. [x] ~~**Immutable audit trail**~~ — **СДЕЛАНО v26**: `audit_trail.py`
+24. [x] ~~**AI code diff safety scanner**~~ — **СДЕЛАНО v26**: `diff_safety_scanner.py`
+
+---
+
 ## Ревизия на 2026-03-27 v25 (автоматический проход; 20 best practices + cost optimization + hallucination detection + 1425 tests)
 
 Проверено командами:

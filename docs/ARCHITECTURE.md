@@ -15,8 +15,8 @@ backend/app/
 ├── git/             # Git/GitHub operations
 ├── middleware/       # Cross-cutting concerns
 ├── models/          # Database models
-├── observability/   # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection
-├── quality/         # PII, hallucination, prompt versioning, token budget, escalation, cache
+├── observability/   # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, audit trail
+├── quality/         # PII, hallucination, prompt versioning, injection guard, diff scanner, cache
 ├── schemas/         # Request/response validation
 ├── services/        # Business logic layer
 └── workflows/       # Pipeline orchestration
@@ -305,6 +305,20 @@ Maps changed source files to relevant test files using path conventions (e.g., `
 
 ### AI Quality Metrics (`ai_metrics.py`)
 Dashboard metrics specific to AI-generated code: regression rate, defect density, merge confidence, agent acceptance rates, AI vs human review comparison, and agent performance (latency, cost, success rate). Exposed via `GET /dashboard/ai-quality-metrics` and `GET /dashboard/review-feedback`.
+
+## Security & Compliance Modules (v26)
+
+### Prompt Injection Guard (`quality/prompt_injection_guard.py`)
+Scans user inputs before they reach AI agents for 6 categories of prompt injection: system prompt override attempts, role manipulation, instruction injection, delimiter injection, base64 encoding attacks, and context switching. Risk scoring 0-100 with allowlist support.
+
+### AI Code Diff Safety Scanner (`quality/diff_safety_scanner.py`)
+Scans AI-generated code diffs for dangerous patterns before merge: dangerous operations (os.remove, shutil.rmtree), security anti-patterns (eval, exec, pickle.loads), hardcoded secrets, dependency tampering (suspicious URLs in requirements.txt), privilege escalation (sudo, chmod 777), and data exfiltration patterns.
+
+### Immutable Audit Trail (`observability/audit_trail.py`)
+Hash-chain (SHA-256) audit logging for all AI agent actions. 10 auditable action types. Tamper detection via hash chain verification. Compliance querying by time range, actor, action, severity. Export capability for audits.
+
+### Structured Retry Strategy (`workflows/retry_strategy.py`)
+Exponential backoff with jitter for LLM API calls. Circuit breaker pattern (closed/open/half-open). Per-error-type configuration: rate limits get 2x delay multiplier, auth and invalid request errors are not retried. Error classification heuristics from exception types and messages.
 
 ## Context Engine
 
