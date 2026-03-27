@@ -16,7 +16,7 @@ backend/app/
 ├── middleware/       # Cross-cutting concerns
 ├── models/          # Database models
 ├── observability/   # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, audit trail, cost tracking, LLM judge
-├── quality/         # PII, hallucination, prompt versioning, injection guard, diff scanner, cache, context mgmt, schema validation, attribution, guardrail orchestrator, sensitive zone policy, self-correction
+├── quality/         # PII, hallucination, prompt versioning, injection guard, diff scanner, cache, context mgmt, schema validation, attribution, guardrail orchestrator, sensitive zone policy, self-correction, AST validator, CI feedback loop, security prompts, agent resilience
 ├── schemas/         # Request/response validation
 ├── services/        # Business logic layer
 └── workflows/       # Pipeline orchestration
@@ -319,6 +319,20 @@ Hash-chain (SHA-256) audit logging for all AI agent actions. 10 auditable action
 
 ### Structured Retry Strategy (`workflows/retry_strategy.py`)
 Exponential backoff with jitter for LLM API calls. Circuit breaker pattern (closed/open/half-open). Per-error-type configuration: rate limits get 2x delay multiplier, auth and invalid request errors are not retried. Error classification heuristics from exception types and messages.
+
+## Code Validation & Resilience Modules (v31)
+
+### AST-Level Code Validation (`quality/ast_code_validator.py`)
+Parses AI-generated Python code into an AST and validates against a Knowledge Base of known APIs and function signatures. Catches semantic hallucinations that linters miss: invented keyword arguments, non-existent attributes (e.g. `json.parse`, `os.execute_shell`), and undefined names. Auto-correction suggestions provided. Batch validation with aggregated reports.
+
+### CI Feedback Loop (`quality/ci_feedback_loop.py`)
+Captures CI/test failures, classifies them (test, lint, type-check, build, runtime, import, security), generates targeted correction prompts, and routes them back to AI agents. Retry budget with exponential backoff (max 3 attempts). Full attempt history for audit. Success-rate analytics by failure type.
+
+### Security-Aware Prompt Injection (`quality/security_prompt_injection.py`)
+Enriches AI agent prompts with security-focused system instructions. Detects code domain (auth, crypto, payments, database, file-io, network, user-input) and injects domain-specific OWASP rules. Three security levels: standard, elevated, critical. Based on Veracode 2026 research showing 56% → 66% secure code improvement.
+
+### Agent Resilience Manager (`quality/agent_resilience.py`)
+Production-grade resilience for LLM API calls. Circuit breaker per provider (closed/open/half-open), exponential backoff with jitter, rate-limit header parsing (Retry-After, X-RateLimit-*), provider health monitoring, automatic fallback chains, and manual reset. Full call log for observability.
 
 ## Context Engine
 

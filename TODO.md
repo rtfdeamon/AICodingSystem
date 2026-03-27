@@ -1,5 +1,87 @@
 # TODO
 
+## Ревизия на 2026-03-27 v31 (автоматический проход; 44 best practices + AST validator + CI feedback loop + security prompts + agent resilience + 2252 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **2252 passed, 0 warnings** (было 2110, +142 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **AST-Level Code Validation** (`app/quality/ast_code_validator.py`)
+  - AST parsing with graceful degradation for partial/broken code
+  - Knowledge Base of stdlib + third-party modules for import validation
+  - Fabricated attribute detection (os.execute_shell, json.parse, etc.)
+  - Function signature validation against introspected callables
+  - Undefined name detection via scope analysis
+  - Auto-correction suggestions for common hallucinations
+  - Batch validation with aggregated reports
+  - Severity scoring: critical (crash), warning, info
+  - Based on Khati et al. (FORGE '26) AST analysis research
+  - ~38 tests in `test_ast_code_validator.py`
+
+- [x] **CI Feedback Loop** (`app/quality/ci_feedback_loop.py`)
+  - Parse CI failure output into structured FailureContext
+  - Classify failure type: test, lint, type-check, build, runtime, import, security
+  - Generate targeted correction prompts from failure context
+  - Retry budget with exponential backoff (max 3 attempts default, capped at 60s)
+  - Full attempt history with diffs for audit
+  - Session lifecycle: pending → in_progress → fixed/failed/skipped
+  - Success-rate analytics across failure types
+  - ~35 tests in `test_ci_feedback_loop.py`
+
+- [x] **Security-Aware Prompt Injection** (`app/quality/security_prompt_injection.py`)
+  - Security system-prompt fragments (general + per-domain: auth, crypto, payments, DB, file-io, network, user-input)
+  - OWASP Top-10 checklist reminders scoped to code context
+  - Sensitive-zone detection: auth/crypto/payments → CRITICAL level
+  - Three security levels: standard, elevated, critical
+  - Prompt composition preserving original prompt structure
+  - Audit: every enrichment logged with security level applied
+  - Based on Veracode 2026 research (56% → 66% secure code with reminders)
+  - ~30 tests in `test_security_prompt_injection.py`
+
+- [x] **Agent Resilience Manager** (`app/quality/agent_resilience.py`)
+  - Circuit breaker per provider (closed → open → half-open state machine)
+  - Configurable failure threshold, recovery timeout, success threshold
+  - Exponential backoff with jitter for retries
+  - Rate-limit header parsing (Retry-After, X-RateLimit-*)
+  - Provider health monitoring (healthy/degraded/unavailable)
+  - Automatic fallback chain across providers
+  - Manual provider reset capability
+  - Cost-aware provider selection
+  - Full call log with observability hooks
+  - ~39 tests in `test_agent_resilience.py`
+
+### Всего best practices: 44/44 (было 40)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-40 | (см. v30) | v24-v30 |
+| 41 | AST-Level Code Validation | v31 |
+| 42 | CI Feedback Loop | v31 |
+| 43 | Security-Aware Prompt Injection | v31 |
+| 44 | Agent Resilience Manager | v31 |
+
+### Результаты тестов
+- Backend: **2252 passed** (было 2110, +142 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- Khati et al. "Detecting and Correcting Hallucinations in LLM-Generated Code via Deterministic AST Analysis" (FORGE '26, IEEE/ACM)
+- Veracode 2026 State of Software Security — security prompts raise secure code from 56% to 66%
+- Maxim.ai "Retries, Fallbacks, and Circuit Breakers in LLM Apps: A Production Guide" (2026)
+- NeuralTrust "Using Circuit Breakers to Secure AI Agents" (2026)
+- Agent Factory "Rate Limiting & Circuit Breaking" (2026)
+- Composio "AI Agent Security: Reliability as Defense Against Data Corruption" (2026)
+- CodeScene "Guardrails and Metrics for AI-Assisted Coding" (2026)
+- DarkReading "As Coders Adopt AI Agents, Security Pitfalls Lurk in 2026"
+- CSA "Understanding Security Risks in AI-Generated Code" (2025)
+- DevOps.com "AI-Generated Code Packages — Slopsquatting Threat" (2025)
+
+---
+
 ## Ревизия на 2026-03-27 v30 (автоматический проход; 40 best practices + agent sandbox + prompt optimizer + consensus + tool gateway + 2110 tests)
 
 Проверено командами:

@@ -275,9 +275,9 @@ npm run build        # TypeScript build check
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (40/40 Implemented)
+## Best Practices (44/44 Implemented)
 
-The system implements all 40 industry best practices for AI coding systems (2025-2026):
+The system implements all 44 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -321,6 +321,10 @@ The system implements all 40 industry best practices for AI coding systems (2025
 | 38 | Feedback-Driven Prompt Optimizer | `prompt_optimizer.py` | v30 |
 | 39 | Multi-Agent Consensus Protocol | `multi_agent_consensus.py` | v30 |
 | 40 | MCP Tool Gateway & Interop | `tool_gateway.py` | v30 |
+| 41 | AST-Level Code Validation | `ast_code_validator.py` | v31 |
+| 42 | CI Feedback Loop | `ci_feedback_loop.py` | v31 |
+| 43 | Security-Aware Prompt Injection | `security_prompt_injection.py` | v31 |
+| 44 | Agent Resilience Manager | `agent_resilience.py` | v31 |
 
 ## Monitoring
 
