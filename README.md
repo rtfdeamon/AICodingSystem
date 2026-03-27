@@ -68,12 +68,12 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── git/               # GitHub client, repo manager, diff parser
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
-│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection
-│   │   │   ├── quality/           # PII, hallucination, prompt versioning, injection guard, diff scanner
+│   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace
+│   │   ├── quality/           # PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 1553 tests, 96% coverage
+│   ├── tests/                 # 1692 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -249,7 +249,7 @@ Real-time events: `ticket.created`, `ticket.moved`, `ticket.updated`, `review.co
 
 ```bash
 cd backend
-.venv/bin/pytest -q                    # Run all 1553 tests
+.venv/bin/pytest -q                    # Run all 1692 tests
 .venv/bin/pytest --cov=backend/app     # With coverage report (96%)
 .venv/bin/ruff check backend/app backend/tests  # Lint check
 .venv/bin/mypy backend/app --ignore-missing-imports  # Type check
@@ -264,20 +264,20 @@ npm run lint         # ESLint check
 npm run build        # TypeScript build check
 ```
 
-### Test Coverage Summary (v26)
+### Test Coverage Summary (v27)
 
 | Component | Tests | Coverage |
 |-----------|-------|----------|
-| Backend | 1553 | 96% |
+| Backend | 1692 | 96% |
 | Frontend | 138+ | — |
 | E2E (Playwright) | 8 | smoke + auth |
 | Lint (ruff) | 0 issues | 100% clean |
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (24/24 Implemented)
+## Best Practices (28/28 Implemented)
 
-The system implements all 24 industry best practices for AI coding systems (2025-2026):
+The system implements all 28 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -305,6 +305,10 @@ The system implements all 24 industry best practices for AI coding systems (2025
 | 22 | Structured Retry with Backoff | `retry_strategy.py` | v26 |
 | 23 | Immutable Audit Trail | `audit_trail.py` | v26 |
 | 24 | AI Code Diff Safety Scanner | `diff_safety_scanner.py` | v26 |
+| 25 | AI Bill of Materials (AI-BOM) | `ai_bom.py` | v27 |
+| 26 | Hallucinated Dependency Detection | `dependency_verifier.py` | v27 |
+| 27 | Spec-Driven Verification Contracts | `spec_verifier.py` | v27 |
+| 28 | Agent Reasoning Trace Review | `reasoning_trace.py` | v27 |
 
 ## Monitoring
 

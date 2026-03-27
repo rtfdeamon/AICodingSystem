@@ -1,5 +1,88 @@
 # TODO
 
+## Ревизия на 2026-03-27 v27 (автоматический проход; 28 best practices + AI-BOM + dependency verification + 1692 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1692 passed, 0 warnings** (было 1553, +139 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **AI Bill of Materials (AI-BOM)** (`app/quality/ai_bom.py`)
+  - Tracks provenance of every AI-generated artifact (model, version, prompt hash, content hash)
+  - License compliance scanning: detects GPL, AGPL, LGPL, MPL, MIT, Apache markers
+  - Copyleft code signature detection (GPL preambles, SPDX identifiers, FSF copyright)
+  - Custom signature registration for organization-specific patterns
+  - Aggregate BOM report generation per project
+  - High-risk artifact filtering and model/ticket-based queries
+  - ~30 tests in `test_ai_bom.py`
+
+- [x] **Hallucinated Dependency Detection (Anti-Slopsquatting)** (`app/quality/dependency_verifier.py`)
+  - Extracts package names from Python imports, JS/TS imports, and requirements.txt
+  - Verifies packages against known PyPI/npm registry (60+ known packages each)
+  - Detects hallucinated package names from blocklist (20+ known AI-hallucinated names)
+  - Suspicious pattern matching (AI-keyword, auto-prefix, helper-suffix patterns)
+  - Levenshtein distance for suggesting real alternatives to suspicious packages
+  - Organization-approved and blocked package lists
+  - ~40 tests in `test_dependency_verifier.py`
+
+- [x] **Spec-Driven Verification Contracts** (`app/quality/spec_verifier.py`)
+  - Structured specification management with acceptance criteria auto-generation
+  - Verification contracts: functional, non-functional, edge case, security criteria
+  - Static code verification (function/class existence, error handling, validation, auth patterns)
+  - Test result integration for explicit pass/fail against spec assertions
+  - Merge blocking on required criteria failure
+  - Spec lifecycle: draft → approved → verified/failed
+  - ~35 tests in `test_spec_verifier.py`
+
+- [x] **Agent Reasoning Trace Review** (`app/observability/reasoning_trace.py`)
+  - Full reasoning trace capture: file reads, writes, retrieval queries, tool invocations, decisions
+  - Confidence level tracking per step (high/medium/low/uncertain)
+  - Backtrack and error recording with recovery tracking
+  - Auto-review against quality checklist (7 checks: excessive backtracks, low confidence, missing context, etc.)
+  - Trace scoring (0-100) for reviewability
+  - Per-ticket trace aggregation and statistics
+  - ~34 tests in `test_reasoning_trace.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все 28 best practices реализованы
+
+Все 28 рекомендаций из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py`
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py`
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py`
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py`
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py`
+6. [x] ~~**QA: AI quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py`
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning**~~ — **СДЕЛАНО v22**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py`
+10. [x] ~~**Observability: Agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py`
+11. [x] ~~**Observability: Automated eval tests**~~ — **СДЕЛАНО v24**: `eval_tests.py`
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py`
+13. [x] ~~**Prompt versioning & lifecycle**~~ — **СДЕЛАНО v25**: `prompt_versioning.py`
+14. [x] ~~**Semantic response cache**~~ — **СДЕЛАНО v25**: `semantic_cache.py`
+15. [x] ~~**Multi-model router with cost cascading**~~ — **СДЕЛАНО v25**: `model_router.py`
+16. [x] ~~**Hallucination detection pipeline**~~ — **СДЕЛАНО v25**: `hallucination_detector.py`
+17. [x] ~~**Token budget enforcer**~~ — **СДЕЛАНО v25**: `token_budget.py`
+18. [x] ~~**Shadow A/B testing**~~ — **СДЕЛАНО v25**: `shadow_testing.py`
+19. [x] ~~**Output drift detection**~~ — **СДЕЛАНО v25**: `drift_detector.py`
+20. [x] ~~**HITL escalation engine**~~ — **СДЕЛАНО v25**: `escalation_engine.py`
+21. [x] ~~**Prompt injection defense**~~ — **СДЕЛАНО v26**: `prompt_injection_guard.py`
+22. [x] ~~**Structured retry with backoff**~~ — **СДЕЛАНО v26**: `retry_strategy.py`
+23. [x] ~~**Immutable audit trail**~~ — **СДЕЛАНО v26**: `audit_trail.py`
+24. [x] ~~**AI code diff safety scanner**~~ — **СДЕЛАНО v26**: `diff_safety_scanner.py`
+25. [x] ~~**AI Bill of Materials (AI-BOM)**~~ — **СДЕЛАНО v27**: `ai_bom.py`
+26. [x] ~~**Hallucinated dependency detection**~~ — **СДЕЛАНО v27**: `dependency_verifier.py`
+27. [x] ~~**Spec-driven verification contracts**~~ — **СДЕЛАНО v27**: `spec_verifier.py`
+28. [x] ~~**Agent reasoning trace review**~~ — **СДЕЛАНО v27**: `reasoning_trace.py`
+
+---
+
 ## Ревизия на 2026-03-27 v26 (автоматический проход; 24 best practices + prompt injection defense + audit trail + 1553 tests)
 
 Проверено командами:
