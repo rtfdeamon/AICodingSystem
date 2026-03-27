@@ -69,11 +69,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
 │   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace, LLM judge
-│   │   ├── quality/           # 56 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator
+│   │   ├── quality/           # 60 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 2534 tests, 96% coverage
+│   ├── tests/                 # 2813 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
