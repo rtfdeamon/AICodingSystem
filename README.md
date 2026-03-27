@@ -69,11 +69,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
 │   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace, LLM judge
-│   │   ├── quality/           # 60 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter
+│   │   ├── quality/           # 64 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter, semantic cache manager, token budget controller, CLEAR eval framework, risk-based guardrail router
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 2813 tests, 96% coverage
+│   ├── tests/                 # 2986 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -275,9 +275,9 @@ npm run build        # TypeScript build check
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (56/56 Implemented)
+## Best Practices (64/64 Implemented)
 
-The system implements all 56 industry best practices for AI coding systems (2025-2026):
+The system implements all 64 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -337,6 +337,14 @@ The system implements all 56 industry best practices for AI coding systems (2025
 | 54 | Regression Test Guard | `regression_test_guard.py` | v34 |
 | 55 | Multi-Model Review Router | `multi_model_review_router.py` | v34 |
 | 56 | Agent Safety Evaluator | `agent_safety_evaluator.py` | v34 |
+| 57 | Parallel Guardrail Runner | `parallel_guardrail_runner.py` | v35 |
+| 58 | Prompt Drift Monitor | `prompt_drift_monitor.py` | v35 |
+| 59 | Agent Entropy Collector | `agent_entropy_collector.py` | v35 |
+| 60 | Diff Size Limiter | `diff_size_limiter.py` | v35 |
+| 61 | Semantic Cache Manager | `semantic_cache_manager.py` | v36 |
+| 62 | Token Budget Controller | `token_budget_controller.py` | v36 |
+| 63 | CLEAR Evaluation Framework | `clear_eval_framework.py` | v36 |
+| 64 | Risk-Based Guardrail Router | `risk_based_guardrail_router.py` | v36 |
 
 ## Monitoring
 

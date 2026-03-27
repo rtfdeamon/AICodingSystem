@@ -1,5 +1,98 @@
 # TODO
 
+## Ревизия на 2026-03-28 v36 (автоматический проход; 64 best practices + semantic cache + token budget + CLEAR eval + risk guardrail router + 2986 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **2986 passed, 0 warnings** (было 2813, +173 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Semantic Cache Manager** (`app/quality/semantic_cache_manager.py`)
+  - Three-layer prompt cache: exact-match → prefix-match → semantic-match
+  - SHA-256 hash-based exact deduplication for identical prompts
+  - Longest common prefix matching for prompt template reuse
+  - Cosine similarity on lightweight embeddings for paraphrased queries
+  - Configurable similarity threshold with safety margin against collisions
+  - TTL-based expiration and LRU eviction with max entries cap
+  - Cost savings estimation per cache hit (model-aware pricing)
+  - Latency savings tracking (bypasses LLM round-trip)
+  - Cache health quality gate: healthy / degraded / unhealthy
+  - Batch lookup across multiple prompts with aggregate reporting
+  - Based on "Don't Break the Cache" (arXiv:2601.06007, Feb 2026), Maxim.ai, Redis semantic caching
+  - ~37 tests in `test_semantic_cache_manager.py`
+
+- [x] **Token Budget Controller** (`app/quality/token_budget_controller.py`)
+  - Per-task, per-agent, and per-session token budget management
+  - Model-aware cost computation (input vs output token pricing, 7 models)
+  - Budget status tracking: under_budget / warning / over_budget / exhausted
+  - Overspend alerts with severity levels (info / warning / critical)
+  - Automatic model downgrade suggestions when budget is tight
+  - Cost breakdown analytics by model, agent, and task
+  - Quality gate: pass / warn / block based on budget utilization
+  - Batch budget reporting across all active budget scopes
+  - Based on Moltbook-AI Cost Optimization Guide 2026, Redis Token Optimization, Stevens Online
+  - ~40 tests in `test_token_budget_controller.py`
+
+- [x] **CLEAR Evaluation Framework** (`app/quality/clear_eval_framework.py`)
+  - Five-dimension AI evaluation: Cost, Latency, Efficacy, Assurance, Reliability
+  - Per-dimension scoring with configurable thresholds and weights
+  - Composite CLEAR score via weighted harmonic mean
+  - Dimension-level quality gates (pass / warn / fail)
+  - Trend analysis: improving / stable / degrading over rolling window
+  - Agent and stage attribution for per-component evaluation
+  - Batch evaluation with aggregated reporting
+  - Weakest/strongest dimension identification
+  - Based on "Beyond Accuracy" (arXiv:2511.14136, Nov 2025), LangChain State of AI Agents 2026
+  - ~42 tests in `test_clear_eval_framework.py`
+
+- [x] **Risk-Based Guardrail Router** (`app/quality/risk_based_guardrail_router.py`)
+  - Request risk classification: low / medium / high / critical
+  - Three guardrail tiers: lightweight (regex), standard (+PII, +injection), comprehensive (+toxicity, +relevance)
+  - Dynamic tier selection based on risk score with domain overrides
+  - Built-in checks: format, PII, injection, toxicity, relevance
+  - Latency budget per tier (50ms / 200ms / 500ms)
+  - Weighted aggregate scoring with confidence-based weighting
+  - Sensitive domain override (financial, medical, legal, security, auth)
+  - Batch evaluation with risk/tier distribution analytics
+  - Based on Authority Partners (2026), Datadog LLM Guardrails, Openlayer, Patronus AI, TFIR
+  - ~54 tests in `test_risk_based_guardrail_router.py`
+
+### Всего best practices: 64/64 (было 60)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-60 | (см. v35) | v24-v35 |
+| 61 | Semantic Cache Manager | v36 |
+| 62 | Token Budget Controller | v36 |
+| 63 | CLEAR Evaluation Framework | v36 |
+| 64 | Risk-Based Guardrail Router | v36 |
+
+### Результаты тестов
+- Backend: **2986 passed** (было 2813, +173 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- "Don't Break the Cache: An Evaluation of Prompt Caching" (arXiv:2601.06007, Feb 2026)
+- Maxim.ai "Top Semantic Caching Solutions for AI Apps in 2026"
+- Redis "Prompt Caching vs Semantic Caching" (2026)
+- arXiv:2601.23088 "Key Collision Attack on LLM Semantic Caching" (Jan 2026)
+- Moltbook-AI "AI Agent Cost Optimization Guide 2026: Reduce Spend by 60-80%"
+- Redis "LLM Token Optimization: Cut Costs & Latency in 2026"
+- Stevens Online "Hidden Economics of AI Agents" (2026)
+- "Beyond Accuracy: A Multi-Dimensional Framework for Evaluating Enterprise Agentic AI Systems" (arXiv:2511.14136, Nov 2025)
+- LangChain "2026 State of AI Agents" report (57% in production, quality #1 barrier)
+- Maxim.ai "AI Evaluation Metrics 2026"
+- Authority Partners "AI Agent Guardrails: Production Guide for 2026"
+- Datadog "LLM Guardrails Best Practices" (2026)
+- Openlayer "AI Guardrails: The Complete Guide" (Jan 2026)
+- Patronus AI "AI Guardrails Tutorial & Best Practices" (2026)
+- TFIR "AI Code Quality 2026: Guardrails for AI-Generated Code"
+
+---
+
 ## Ревизия на 2026-03-28 v35 (автоматический проход; 60 best practices + parallel guardrails + drift monitor + entropy collector + diff limiter + 2813 tests)
 
 Проверено командами:
