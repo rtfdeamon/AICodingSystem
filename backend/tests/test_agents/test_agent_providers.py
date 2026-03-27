@@ -12,9 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.base import AgentResponse, BaseAgent, calculate_cost
 
-pytestmark = pytest.mark.asyncio
-
-
 # ── calculate_cost ────────────────────────────────────────────────────
 
 
@@ -77,6 +74,7 @@ class StubAgent(BaseAgent):
         )
 
 
+@pytest.mark.asyncio
 async def test_invoke_success() -> None:
     agent = StubAgent()
     result = await agent.invoke("test prompt")
@@ -85,6 +83,7 @@ async def test_invoke_success() -> None:
     assert result.cost_usd == 0.0  # unknown model "stub-1"
 
 
+@pytest.mark.asyncio
 async def test_invoke_with_db_logging(db_session: AsyncSession) -> None:
     agent = StubAgent()
     ticket_id = uuid.uuid4()
@@ -97,12 +96,14 @@ async def test_invoke_with_db_logging(db_session: AsyncSession) -> None:
     assert result.content == "stub response"
 
 
+@pytest.mark.asyncio
 async def test_invoke_error_raises() -> None:
     agent = StubAgent(error=ValueError("API error"))
     with pytest.raises(ValueError, match="API error"):
         await agent.invoke("test prompt")
 
 
+@pytest.mark.asyncio
 async def test_invoke_timeout() -> None:
     import asyncio
 
@@ -131,6 +132,7 @@ def test_claude_agent_requires_key() -> None:
             ClaudeAgent()
 
 
+@pytest.mark.asyncio
 @patch("anthropic.AsyncAnthropic")
 async def test_claude_agent_generate(mock_anthropic_cls: MagicMock) -> None:
     mock_client = AsyncMock()
@@ -178,6 +180,7 @@ def test_codex_agent_requires_key() -> None:
             CodexAgent()
 
 
+@pytest.mark.asyncio
 @patch("openai.AsyncOpenAI")
 async def test_codex_agent_generate(mock_openai_cls: MagicMock) -> None:
     mock_client = AsyncMock()

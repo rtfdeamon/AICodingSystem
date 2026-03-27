@@ -219,3 +219,173 @@ async def test_broadcast_to_empty_project() -> None:
 async def test_broadcast_to_user_no_connections() -> None:
     mgr = ConnectionManager()
     await mgr.broadcast_to_user("unknown-user", {"type": "test"})  # Should not raise
+
+
+# ------------------------------------------------------------------
+# subscribe_events tests (lines 128-149)
+# ------------------------------------------------------------------
+
+
+async def test_subscribe_events_project_broadcast() -> None:
+    """subscribe_events forwards messages with project_id to broadcast_to_project."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    mgr = ConnectionManager()
+    mgr.broadcast_to_project = AsyncMock()
+
+    message_data = '{"project_id": "proj-1", "type": "ticket.created"}'
+
+    async def _mock_listen():
+        yield {"type": "message", "data": message_data}
+
+    mock_pubsub = AsyncMock()
+    mock_pubsub.subscribe = AsyncMock()
+    mock_pubsub.listen = _mock_listen
+
+    mock_redis = MagicMock()
+    mock_redis.pubsub.return_value = mock_pubsub
+
+    with patch("app.redis.get_redis_pool", return_value=mock_redis):
+        await mgr.subscribe_events("test-channel")
+
+    mock_pubsub.subscribe.assert_awaited_once_with("test-channel")
+    mgr.broadcast_to_project.assert_awaited_once_with(
+        "proj-1", {"project_id": "proj-1", "type": "ticket.created"}
+    )
+
+
+async def test_subscribe_events_user_broadcast() -> None:
+    """subscribe_events forwards messages with target_user_id to broadcast_to_user."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    mgr = ConnectionManager()
+    mgr.broadcast_to_user = AsyncMock()
+
+    message_data = '{"target_user_id": "user-42", "type": "notification"}'
+
+    async def _mock_listen():
+        yield {"type": "message", "data": message_data}
+
+    mock_pubsub = AsyncMock()
+    mock_pubsub.subscribe = AsyncMock()
+    mock_pubsub.listen = _mock_listen
+
+    mock_redis = MagicMock()
+    mock_redis.pubsub.return_value = mock_pubsub
+
+    with patch("app.redis.get_redis_pool", return_value=mock_redis):
+        await mgr.subscribe_events("test-channel")
+
+    mgr.broadcast_to_user.assert_awaited_once_with(
+        "user-42", {"target_user_id": "user-42", "type": "notification"}
+    )
+
+
+async def test_subscribe_events_both_project_and_user() -> None:
+    """subscribe_events forwards to both project and user when both keys present."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    mgr = ConnectionManager()
+    mgr.broadcast_to_project = AsyncMock()
+    mgr.broadcast_to_user = AsyncMock()
+
+    message_data = '{"project_id": "p1", "target_user_id": "u1", "type": "combo"}'
+
+    async def _mock_listen():
+        yield {"type": "message", "data": message_data}
+
+    mock_pubsub = AsyncMock()
+    mock_pubsub.subscribe = AsyncMock()
+    mock_pubsub.listen = _mock_listen
+
+    mock_redis = MagicMock()
+    mock_redis.pubsub.return_value = mock_pubsub
+
+    with patch("app.redis.get_redis_pool", return_value=mock_redis):
+        await mgr.subscribe_events("ch")
+
+    mgr.broadcast_to_project.assert_awaited_once()
+    mgr.broadcast_to_user.assert_awaited_once()
+
+
+async def test_subscribe_events_skips_non_message_types() -> None:
+    """subscribe_events ignores messages whose type is not 'message'."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    mgr = ConnectionManager()
+    mgr.broadcast_to_project = AsyncMock()
+    mgr.broadcast_to_user = AsyncMock()
+
+    async def _mock_listen():
+        yield {"type": "subscribe", "data": None}
+        yield {"type": "pong", "data": None}
+
+    mock_pubsub = AsyncMock()
+    mock_pubsub.subscribe = AsyncMock()
+    mock_pubsub.listen = _mock_listen
+
+    mock_redis = MagicMock()
+    mock_redis.pubsub.return_value = mock_pubsub
+
+    with patch("app.redis.get_redis_pool", return_value=mock_redis):
+        await mgr.subscribe_events("ch")
+
+    mgr.broadcast_to_project.assert_not_awaited()
+    mgr.broadcast_to_user.assert_not_awaited()
+
+
+async def test_subscribe_events_handles_malformed_json() -> None:
+    """subscribe_events logs an error but does not crash on bad JSON."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    mgr = ConnectionManager()
+
+    async def _mock_listen():
+        yield {"type": "message", "data": "NOT VALID JSON{{{"}
+
+    mock_pubsub = AsyncMock()
+    mock_pubsub.subscribe = AsyncMock()
+    mock_pubsub.listen = _mock_listen
+
+    mock_redis = MagicMock()
+    mock_redis.pubsub.return_value = mock_pubsub
+
+    with patch("app.redis.get_redis_pool", return_value=mock_redis):
+        await mgr.subscribe_events("ch")  # Should not raise
+
+
+async def test_subscribe_events_redis_unavailable() -> None:
+    """subscribe_events handles Redis connection failure gracefully."""
+    from unittest.mock import patch
+
+    mgr = ConnectionManager()
+
+    with patch("app.redis.get_redis_pool", side_effect=ConnectionError("no redis")):
+        await mgr.subscribe_events("ch")  # Should not raise
+
+
+async def test_subscribe_events_no_project_or_user() -> None:
+    """subscribe_events does nothing when event has neither project_id nor target_user_id."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    mgr = ConnectionManager()
+    mgr.broadcast_to_project = AsyncMock()
+    mgr.broadcast_to_user = AsyncMock()
+
+    message_data = '{"type": "heartbeat"}'
+
+    async def _mock_listen():
+        yield {"type": "message", "data": message_data}
+
+    mock_pubsub = AsyncMock()
+    mock_pubsub.subscribe = AsyncMock()
+    mock_pubsub.listen = _mock_listen
+
+    mock_redis = MagicMock()
+    mock_redis.pubsub.return_value = mock_pubsub
+
+    with patch("app.redis.get_redis_pool", return_value=mock_redis):
+        await mgr.subscribe_events("ch")
+
+    mgr.broadcast_to_project.assert_not_awaited()
+    mgr.broadcast_to_user.assert_not_awaited()

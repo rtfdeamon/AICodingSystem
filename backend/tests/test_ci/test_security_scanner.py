@@ -22,8 +22,6 @@ from app.ci.security_scanner import (
     run_sast,
 )
 
-pytestmark = pytest.mark.asyncio
-
 _TEST_PROJECT = "/var/test/project"  # noqa: S105
 
 
@@ -97,6 +95,7 @@ def test_vulnerability_defaults() -> None:
 # ── _run_subprocess ──────────────────────────────────────────────────
 
 
+@pytest.mark.asyncio
 async def test_run_subprocess_success() -> None:
     mock_proc = AsyncMock()
     mock_proc.communicate.return_value = (b"hello stdout", b"hello stderr")
@@ -110,6 +109,7 @@ async def test_run_subprocess_success() -> None:
     assert stderr == "hello stderr"
 
 
+@pytest.mark.asyncio
 async def test_run_subprocess_nonzero_returncode() -> None:
     mock_proc = AsyncMock()
     mock_proc.communicate.return_value = (b"out", b"err")
@@ -122,6 +122,7 @@ async def test_run_subprocess_nonzero_returncode() -> None:
     assert stdout == "out"
 
 
+@pytest.mark.asyncio
 async def test_run_subprocess_none_returncode_treated_as_zero() -> None:
     mock_proc = AsyncMock()
     mock_proc.communicate.return_value = (b"", b"")
@@ -133,6 +134,7 @@ async def test_run_subprocess_none_returncode_treated_as_zero() -> None:
     assert code == 0
 
 
+@pytest.mark.asyncio
 async def test_run_subprocess_timeout() -> None:
     mock_proc = AsyncMock()
     # After kill, the second communicate() returns empty bytes
@@ -153,6 +155,7 @@ async def test_run_subprocess_timeout() -> None:
     mock_proc.kill.assert_called_once()
 
 
+@pytest.mark.asyncio
 async def test_run_subprocess_with_cwd() -> None:
     mock_proc = AsyncMock()
     mock_proc.communicate.return_value = (b"ok", b"")
@@ -174,6 +177,7 @@ async def test_run_subprocess_with_cwd() -> None:
 # ── _run_semgrep ─────────────────────────────────────────────────────
 
 
+@pytest.mark.asyncio
 async def test_run_semgrep_parses_results() -> None:
     semgrep_output = json.dumps(
         {
@@ -205,6 +209,7 @@ async def test_run_semgrep_parses_results() -> None:
     assert vulns[0].fix_suggestion == "use ast.literal_eval"
 
 
+@pytest.mark.asyncio
 async def test_run_semgrep_empty_results() -> None:
     with patch(
         "app.ci.security_scanner._run_subprocess",
@@ -216,6 +221,7 @@ async def test_run_semgrep_empty_results() -> None:
     assert vulns == []
 
 
+@pytest.mark.asyncio
 async def test_run_semgrep_invalid_json() -> None:
     with patch(
         "app.ci.security_scanner._run_subprocess",
@@ -227,6 +233,7 @@ async def test_run_semgrep_invalid_json() -> None:
     assert vulns == []
 
 
+@pytest.mark.asyncio
 async def test_run_semgrep_missing_fields_uses_defaults() -> None:
     output = json.dumps({"results": [{"extra": {}}]})
     with patch(
@@ -246,6 +253,7 @@ async def test_run_semgrep_missing_fields_uses_defaults() -> None:
 # ── _run_bandit ──────────────────────────────────────────────────────
 
 
+@pytest.mark.asyncio
 async def test_run_bandit_parses_results() -> None:
     bandit_output = json.dumps(
         {
@@ -275,6 +283,7 @@ async def test_run_bandit_parses_results() -> None:
     assert vulns[0].rule == "B105"
 
 
+@pytest.mark.asyncio
 async def test_run_bandit_empty_results() -> None:
     with patch(
         "app.ci.security_scanner._run_subprocess",
@@ -286,6 +295,7 @@ async def test_run_bandit_empty_results() -> None:
     assert vulns == []
 
 
+@pytest.mark.asyncio
 async def test_run_bandit_invalid_json() -> None:
     with patch(
         "app.ci.security_scanner._run_subprocess",
@@ -300,6 +310,7 @@ async def test_run_bandit_invalid_json() -> None:
 # ── _audit_python_deps ───────────────────────────────────────────────
 
 
+@pytest.mark.asyncio
 async def test_audit_python_deps_with_requirements(tmp_path: Path) -> None:
     req_file = tmp_path / "requirements.txt"
     req_file.write_text("flask==2.0.0\n")
@@ -338,6 +349,7 @@ async def test_audit_python_deps_with_requirements(tmp_path: Path) -> None:
     assert "--requirement" in cmd_arg
 
 
+@pytest.mark.asyncio
 async def test_audit_python_deps_no_requirements(tmp_path: Path) -> None:
     audit_output = json.dumps({"dependencies": []})
     with patch(
@@ -352,6 +364,7 @@ async def test_audit_python_deps_no_requirements(tmp_path: Path) -> None:
     assert "--requirement" not in cmd_arg
 
 
+@pytest.mark.asyncio
 async def test_audit_python_deps_invalid_json() -> None:
     with patch(
         "app.ci.security_scanner._run_subprocess",
@@ -363,6 +376,7 @@ async def test_audit_python_deps_invalid_json() -> None:
     assert vulns == []
 
 
+@pytest.mark.asyncio
 async def test_audit_python_deps_multiple_vulns_per_dep(tmp_path: Path) -> None:
     audit_output = json.dumps(
         {
@@ -393,6 +407,7 @@ async def test_audit_python_deps_multiple_vulns_per_dep(tmp_path: Path) -> None:
 # ── _audit_npm_deps ──────────────────────────────────────────────────
 
 
+@pytest.mark.asyncio
 async def test_audit_npm_deps_v2_format() -> None:
     npm_output = json.dumps(
         {
@@ -419,6 +434,7 @@ async def test_audit_npm_deps_v2_format() -> None:
     assert vulns[0].fix_suggestion == "lodash"
 
 
+@pytest.mark.asyncio
 async def test_audit_npm_deps_v2_via_string() -> None:
     """When 'via' contains strings instead of dicts, description should be empty."""
     npm_output = json.dumps(
@@ -444,6 +460,7 @@ async def test_audit_npm_deps_v2_via_string() -> None:
     assert vulns[0].fix_suggestion == "Update dependency"
 
 
+@pytest.mark.asyncio
 async def test_audit_npm_deps_v2_empty_via() -> None:
     npm_output = json.dumps(
         {
@@ -466,6 +483,7 @@ async def test_audit_npm_deps_v2_empty_via() -> None:
     assert vulns[0].description == "pkg: "
 
 
+@pytest.mark.asyncio
 async def test_audit_npm_deps_v1_format() -> None:
     npm_output = json.dumps(
         {
@@ -493,6 +511,7 @@ async def test_audit_npm_deps_v1_format() -> None:
     assert "express" in vulns[0].description
 
 
+@pytest.mark.asyncio
 async def test_audit_npm_deps_v1_no_cves() -> None:
     npm_output = json.dumps(
         {
@@ -518,6 +537,7 @@ async def test_audit_npm_deps_v1_no_cves() -> None:
     assert vulns[0].rule == "npm-unknown"
 
 
+@pytest.mark.asyncio
 async def test_audit_npm_deps_invalid_json() -> None:
     with patch(
         "app.ci.security_scanner._run_subprocess",
@@ -534,6 +554,7 @@ async def test_audit_npm_deps_invalid_json() -> None:
 
 @patch("app.ci.security_scanner._run_bandit", new_callable=AsyncMock)
 @patch("app.ci.security_scanner._run_semgrep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_run_sast_python_no_findings(mock_semgrep: AsyncMock, mock_bandit: AsyncMock) -> None:
     mock_semgrep.return_value = []
     mock_bandit.return_value = []
@@ -547,6 +568,7 @@ async def test_run_sast_python_no_findings(mock_semgrep: AsyncMock, mock_bandit:
 
 
 @patch("app.ci.security_scanner._run_semgrep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_run_sast_javascript(mock_semgrep: AsyncMock) -> None:
     mock_semgrep.return_value = []
     result = await run_sast(_TEST_PROJECT, language="javascript")
@@ -556,6 +578,7 @@ async def test_run_sast_javascript(mock_semgrep: AsyncMock) -> None:
 
 @patch("app.ci.security_scanner._run_bandit", new_callable=AsyncMock)
 @patch("app.ci.security_scanner._run_semgrep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_run_sast_with_critical_findings(
     mock_semgrep: AsyncMock, mock_bandit: AsyncMock
 ) -> None:
@@ -577,6 +600,7 @@ async def test_run_sast_with_critical_findings(
 
 @patch("app.ci.security_scanner._run_bandit", new_callable=AsyncMock)
 @patch("app.ci.security_scanner._run_semgrep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_run_sast_mixed_severities(
     mock_semgrep: AsyncMock, mock_bandit: AsyncMock
 ) -> None:
@@ -598,6 +622,7 @@ async def test_run_sast_mixed_severities(
 
 
 @patch("app.ci.security_scanner._run_semgrep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_run_sast_typescript(mock_semgrep: AsyncMock) -> None:
     mock_semgrep.return_value = []
     result = await run_sast(_TEST_PROJECT, language="typescript")
@@ -609,6 +634,7 @@ async def test_run_sast_typescript(mock_semgrep: AsyncMock) -> None:
 
 
 @patch("app.ci.security_scanner._audit_python_deps", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_dependency_audit_python(mock_audit: AsyncMock) -> None:
     mock_audit.return_value = []
     result = await run_dependency_audit(_TEST_PROJECT, language="python")
@@ -617,6 +643,7 @@ async def test_dependency_audit_python(mock_audit: AsyncMock) -> None:
 
 
 @patch("app.ci.security_scanner._audit_npm_deps", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_dependency_audit_javascript(mock_audit: AsyncMock) -> None:
     mock_audit.return_value = [
         Vulnerability(
@@ -629,6 +656,7 @@ async def test_dependency_audit_javascript(mock_audit: AsyncMock) -> None:
 
 
 @patch("app.ci.security_scanner._audit_npm_deps", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_dependency_audit_typescript(mock_audit: AsyncMock) -> None:
     mock_audit.return_value = []
     result = await run_dependency_audit(_TEST_PROJECT, language="typescript")
@@ -636,6 +664,7 @@ async def test_dependency_audit_typescript(mock_audit: AsyncMock) -> None:
     mock_audit.assert_called_once()
 
 
+@pytest.mark.asyncio
 async def test_dependency_audit_unknown_language() -> None:
     result = await run_dependency_audit(_TEST_PROJECT, language="rust")
     assert result == []

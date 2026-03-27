@@ -140,7 +140,7 @@ async def move_ticket(
 
     ok, reason = validate_transition(ticket, to_column, actor_role)
     if not ok:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=reason)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=reason)
 
     from_column = (
         ticket.column_name.value

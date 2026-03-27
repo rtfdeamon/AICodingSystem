@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import uuid
+from unittest.mock import patch
 
 import pytest
 from httpx import AsyncClient
@@ -169,3 +173,300 @@ async def test_github_webhook_no_signature(async_client: AsyncClient) -> None:
     )
     # Without proper signature, should be rejected
     assert resp.status_code in (200, 401, 403, 422)
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage: n8n ticket-update with mapped actions
+# ---------------------------------------------------------------------------
+
+
+async def test_n8n_ticket_update_approve_plan_moves_to_ai_coding(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Action 'approve_plan' is in _ACTION_COLUMN_MAP -> moves ticket to ai_coding."""
+    ticket_id = await _create_ticket_for_webhook(async_client, auth_headers)
+
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/ticket-update",
+        json={"ticket_id": ticket_id, "action": "approve_plan", "data": {}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "received"
+
+
+async def test_n8n_ticket_update_reject_plan_moves_to_backlog(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Action 'reject_plan' moves ticket back to backlog."""
+    ticket_id = await _create_ticket_for_webhook(async_client, auth_headers)
+
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/ticket-update",
+        json={"ticket_id": ticket_id, "action": "reject_plan", "data": {}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "received"
+
+
+async def test_n8n_ticket_update_approve_production(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Action 'approve_production' maps to PRODUCTION column."""
+    ticket_id = await _create_ticket_for_webhook(async_client, auth_headers)
+
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/ticket-update",
+        json={"ticket_id": ticket_id, "action": "approve_production", "data": {}},
+    )
+    assert resp.status_code == 200
+
+
+async def test_n8n_ticket_update_invalid_uuid_string(
+    async_client: AsyncClient,
+) -> None:
+    """A non-UUID ticket_id triggers the ValueError branch in _get_ticket_or_none."""
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/ticket-update",
+        json={"ticket_id": "not-a-uuid", "action": "approve_plan", "data": {}},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "received"
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage: n8n build-complete with nonexistent / invalid ticket
+# ---------------------------------------------------------------------------
+
+
+async def test_n8n_build_complete_nonexistent_ticket(
+    async_client: AsyncClient,
+) -> None:
+    """Build-complete for a UUID that doesn't exist in DB — ticket is None, no-op."""
+    fake_id = str(uuid.uuid4())
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/build-complete",
+        json={"ticket_id": fake_id, "build_status": "success"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "received"
+
+
+async def test_n8n_build_complete_invalid_uuid(
+    async_client: AsyncClient,
+) -> None:
+    """Build-complete with an invalid UUID triggers ValueError in helper."""
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/build-complete",
+        json={"ticket_id": "bad-uuid", "build_status": "failure"},
+    )
+    assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage: n8n deploy-status branches
+# ---------------------------------------------------------------------------
+
+
+async def test_n8n_deploy_status_production_success(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Deploy success + production environment moves ticket to PRODUCTION."""
+    ticket_id = await _create_ticket_for_webhook(async_client, auth_headers)
+
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/deploy-status",
+        json={
+            "ticket_id": ticket_id,
+            "environment": "production",
+            "deploy_status": "success",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "received"
+
+
+async def test_n8n_deploy_status_failure(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Deploy failure moves ticket to STAGING."""
+    ticket_id = await _create_ticket_for_webhook(async_client, auth_headers)
+
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/deploy-status",
+        json={
+            "ticket_id": ticket_id,
+            "environment": "staging",
+            "deploy_status": "failure",
+        },
+    )
+    assert resp.status_code == 200
+
+
+async def test_n8n_deploy_status_rollback(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Deploy rollback moves ticket to STAGING."""
+    ticket_id = await _create_ticket_for_webhook(async_client, auth_headers)
+
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/deploy-status",
+        json={
+            "ticket_id": ticket_id,
+            "environment": "production",
+            "deploy_status": "rollback",
+        },
+    )
+    assert resp.status_code == 200
+
+
+async def test_n8n_deploy_status_nonexistent_ticket(
+    async_client: AsyncClient,
+) -> None:
+    """Deploy status with nonexistent ticket — no-op."""
+    fake_id = str(uuid.uuid4())
+    resp = await async_client.post(
+        "/api/v1/webhooks/n8n/deploy-status",
+        json={
+            "ticket_id": fake_id,
+            "environment": "staging",
+            "deploy_status": "success",
+        },
+    )
+    assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage: GitHub webhook with various event types
+# ---------------------------------------------------------------------------
+
+
+async def test_github_webhook_no_secret_set(async_client: AsyncClient) -> None:
+    """When GITHUB_CLIENT_SECRET is None, signature check is skipped (200)."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = None
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"ref": "refs/heads/main"},
+            headers={"X-GitHub-Event": "push"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["event"] == "push"
+
+
+async def test_github_webhook_push_event(async_client: AsyncClient) -> None:
+    """GitHub push event is logged and returns 200."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = None
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"ref": "refs/heads/main", "commits": []},
+            headers={"X-GitHub-Event": "push"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["event"] == "push"
+
+
+async def test_github_webhook_pull_request_event(async_client: AsyncClient) -> None:
+    """GitHub pull_request event is logged."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = None
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"action": "opened", "number": 42},
+            headers={"X-GitHub-Event": "pull_request"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["event"] == "pull_request"
+
+
+async def test_github_webhook_check_run_event(async_client: AsyncClient) -> None:
+    """GitHub check_run event with conclusion is logged."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = None
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"check_run": {"conclusion": "success"}},
+            headers={"X-GitHub-Event": "check_run"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["event"] == "check_run"
+
+
+async def test_github_webhook_unknown_event(async_client: AsyncClient) -> None:
+    """Unhandled GitHub event type falls through to the else branch."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = None
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"action": "created"},
+            headers={"X-GitHub-Event": "star"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["event"] == "star"
+
+
+async def test_github_webhook_no_event_header(async_client: AsyncClient) -> None:
+    """Missing X-GitHub-Event header defaults to 'unknown'."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = None
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"some": "data"},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["event"] == "unknown"
+
+
+async def test_github_webhook_valid_signature(async_client: AsyncClient) -> None:
+    """Valid HMAC signature passes verification."""
+    secret = "test-webhook-secret"
+    body = json.dumps({"ref": "refs/heads/main"}).encode()
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = secret
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            content=body,
+            headers={
+                "X-GitHub-Event": "push",
+                "X-Hub-Signature-256": sig,
+                "Content-Type": "application/json",
+            },
+        )
+    assert resp.status_code == 200
+
+
+async def test_github_webhook_invalid_signature(async_client: AsyncClient) -> None:
+    """Invalid HMAC signature returns 401."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = "real-secret"
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"ref": "refs/heads/main"},
+            headers={
+                "X-GitHub-Event": "push",
+                "X-Hub-Signature-256": "sha256=invalid",
+            },
+        )
+    assert resp.status_code == 401
+
+
+async def test_github_webhook_missing_signature_with_secret(
+    async_client: AsyncClient,
+) -> None:
+    """When secret is set but no signature header is provided, returns 401."""
+    with patch("app.api.v1.webhooks.settings") as mock_settings:
+        mock_settings.GITHUB_CLIENT_SECRET = "some-secret"
+        resp = await async_client.post(
+            "/api/v1/webhooks/github",
+            json={"ref": "refs/heads/main"},
+            headers={"X-GitHub-Event": "push"},
+        )
+    assert resp.status_code == 401

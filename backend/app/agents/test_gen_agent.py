@@ -54,6 +54,7 @@ Generate comprehensive test files for the above changes.\
 
 @dataclass
 class TestFile:
+    __test__ = False  # prevent pytest from collecting this dataclass
     """A generated test file."""
 
     file_path: str

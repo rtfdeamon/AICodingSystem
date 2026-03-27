@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -94,7 +94,7 @@ async def _send_in_app(user_id: uuid.UUID, notification: Notification) -> None:
             "ticket_id": str(notification.ticket_id) if notification.ticket_id else None,
             "sent_at": notification.sent_at.isoformat() if notification.sent_at else None,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
     await ws_manager.broadcast_to_user(str(user_id), event)
 

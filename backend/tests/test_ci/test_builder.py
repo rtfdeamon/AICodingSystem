@@ -13,9 +13,6 @@ from app.ci.builder import (
     trigger_build,
 )
 
-pytestmark = pytest.mark.asyncio
-
-
 # ── BuildResult dataclass ─────────────────────────────────────────────
 
 
@@ -96,6 +93,7 @@ def _make_response(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_dispatch_failure(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -120,6 +118,7 @@ async def test_trigger_build_dispatch_failure(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_run_not_found(mock_sleep: AsyncMock, mock_settings: MagicMock) -> None:
     """When dispatch succeeds (204) but we cannot find the run, return failure."""
     mock_settings.GITHUB_CLIENT_SECRET = "tok"
@@ -143,6 +142,7 @@ async def test_trigger_build_run_not_found(mock_sleep: AsyncMock, mock_settings:
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_run_not_found_non_200_runs(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -166,6 +166,7 @@ async def test_trigger_build_run_not_found_non_200_runs(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_success(mock_sleep: AsyncMock, mock_settings: MagicMock) -> None:
     """Happy path: dispatch 204, run found, completed with success, artifacts fetched."""
     mock_settings.GITHUB_CLIENT_SECRET = "tok"
@@ -224,6 +225,7 @@ async def test_trigger_build_success(mock_sleep: AsyncMock, mock_settings: Magic
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_conclusion_failure(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -260,6 +262,7 @@ async def test_trigger_build_conclusion_failure(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_conclusion_cancelled(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -296,6 +299,7 @@ async def test_trigger_build_conclusion_cancelled(
 @patch("app.ci.builder.MAX_POLL_DURATION_S", 0)
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_timed_out(mock_sleep: AsyncMock, mock_settings: MagicMock) -> None:
     """When polling exceeds MAX_POLL_DURATION_S the status is timed_out."""
     mock_settings.GITHUB_CLIENT_SECRET = "tok"
@@ -326,6 +330,7 @@ async def test_trigger_build_timed_out(mock_sleep: AsyncMock, mock_settings: Mag
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_poll_non_200_then_success(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -372,6 +377,7 @@ async def test_trigger_build_poll_non_200_then_success(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_artifacts_with_missing_fields(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -423,6 +429,7 @@ async def test_trigger_build_artifacts_with_missing_fields(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_dispatch_200_accepted(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:
@@ -458,6 +465,7 @@ async def test_trigger_build_dispatch_200_accepted(
 
 @patch("app.ci.builder.settings")
 @patch("app.ci.builder.asyncio.sleep", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_trigger_build_sha_prefix_matching(
     mock_sleep: AsyncMock, mock_settings: MagicMock
 ) -> None:

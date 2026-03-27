@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -104,7 +104,7 @@ class PipelineOrchestrator:
                 "message": message,
                 **(data or {}),
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         await ws_manager.broadcast_to_project(
             str(ticket.project_id),

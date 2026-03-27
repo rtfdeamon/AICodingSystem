@@ -259,7 +259,7 @@ async def rollback_deployment(
 
     if deployment.status in (DeployStatus.ROLLED_BACK, DeployStatus.FAILED):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Cannot rollback deployment with status '{deployment.status.value}'.",
         )
 
@@ -296,13 +296,13 @@ async def promote_deployment(
 
     if deployment.deploy_type != DeployType.CANARY:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Only canary deployments can be promoted.",
         )
 
     if deployment.status not in (DeployStatus.DEPLOYING, DeployStatus.DEPLOYED):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"Cannot promote deployment with status '{deployment.status.value}'.",
         )
 

@@ -175,3 +175,211 @@ async def test_update_user_role_forbidden_for_developer(
     )
 
     assert response.status_code == 403
+
+
+async def test_change_role_user_not_found(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Changing role for a non-existent user returns 404."""
+    fake_id = uuid.uuid4()
+
+    response = await async_client.patch(
+        f"/api/v1/users/{fake_id}/role",
+        headers=auth_headers,
+        json={"role": "developer"},
+    )
+
+    assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Update user (PATCH /{user_id})
+# ---------------------------------------------------------------------------
+
+
+async def test_update_self(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """A user can update their own profile."""
+    user, headers = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{user.id}",
+        headers=headers,
+        json={"full_name": "Updated Name"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["full_name"] == "Updated Name"
+
+
+async def test_update_self_avatar(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """A user can update their avatar_url."""
+    user, headers = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{user.id}",
+        headers=headers,
+        json={"avatar_url": "https://example.com/avatar.png"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["avatar_url"] == "https://example.com/avatar.png"
+
+
+async def test_admin_can_update_other_user(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+    db_session: AsyncSession,
+) -> None:
+    """Owner can update another user's profile."""
+    target, _ = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{target.id}",
+        headers=auth_headers,
+        json={"full_name": "Admin Changed"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["full_name"] == "Admin Changed"
+
+
+async def test_developer_cannot_update_other_user(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """A developer cannot update another user's profile."""
+    dev, dev_headers = await _make_user(db_session, role="developer")
+    target, _ = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{target.id}",
+        headers=dev_headers,
+        json={"full_name": "Hacked"},
+    )
+
+    assert response.status_code == 403
+
+
+async def test_update_user_not_found(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    """Updating a non-existent user returns 404."""
+    fake_id = uuid.uuid4()
+
+    response = await async_client.patch(
+        f"/api/v1/users/{fake_id}",
+        headers=auth_headers,
+        json={"full_name": "Ghost"},
+    )
+
+    assert response.status_code == 404
+
+
+async def test_developer_cannot_change_own_role(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """A developer cannot promote themselves via the update endpoint."""
+    dev, dev_headers = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{dev.id}",
+        headers=dev_headers,
+        json={"role": "owner"},
+    )
+
+    assert response.status_code == 403
+
+
+async def test_admin_can_change_role_via_update(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+    db_session: AsyncSession,
+) -> None:
+    """An owner can change another user's role via the general update endpoint."""
+    target, _ = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{target.id}",
+        headers=auth_headers,
+        json={"role": "pm_lead"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["role"] == "pm_lead"
+
+
+async def test_update_no_fields(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """Updating with an empty body is a valid no-op."""
+    user, headers = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{user.id}",
+        headers=headers,
+        json={},
+    )
+
+    assert response.status_code == 200
+
+
+async def test_list_users_filter_inactive(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+    db_session: AsyncSession,
+) -> None:
+    """Listing users with is_active=false returns only inactive users."""
+    response = await async_client.get(
+        "/api/v1/users",
+        headers=auth_headers,
+        params={"is_active": "false"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    # All returned users should be inactive
+    for u in body:
+        assert u["is_active"] is False
+
+
+async def test_pm_lead_can_list_users(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """A pm_lead can list users."""
+    _, pm_headers = await _make_user(db_session, role="pm_lead")
+
+    response = await async_client.get("/api/v1/users", headers=pm_headers)
+    assert response.status_code == 200
+
+
+async def test_pm_lead_can_change_role(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """A pm_lead can change another user's role."""
+    _, pm_headers = await _make_user(db_session, role="pm_lead")
+    target, _ = await _make_user(db_session, role="developer")
+
+    response = await async_client.patch(
+        f"/api/v1/users/{target.id}/role",
+        headers=pm_headers,
+        json={"role": "ai_agent"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "ai_agent"

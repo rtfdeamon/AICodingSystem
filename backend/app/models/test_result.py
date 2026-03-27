@@ -24,6 +24,7 @@ from app.models.base_types import DBUUID, generate_uuid, utcnow
 
 
 class TestResult(Base):
+    __test__ = False  # prevent pytest from collecting this ORM model
     __tablename__ = "test_results"
 
     id: Mapped[uuid.UUID] = mapped_column(

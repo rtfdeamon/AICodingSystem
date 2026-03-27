@@ -16,9 +16,6 @@ from app.models.ticket import ColumnName, Priority, Ticket
 from app.models.user import User
 from app.services.auth_service import create_access_token, hash_password
 
-pytestmark = pytest.mark.asyncio
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -105,6 +102,7 @@ def _fake_path(*, exists: bool = True, has_git: bool = True) -> MagicMock:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.asyncio
 async def test_get_oauth_url_success(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -120,6 +118,7 @@ async def test_get_oauth_url_success(
     assert resp.json()["url"].startswith("https://github.com")
 
 
+@pytest.mark.asyncio
 async def test_get_oauth_url_with_state(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -139,6 +138,7 @@ async def test_get_oauth_url_with_state(
     mock_get.assert_called_once_with(state="xyz")
 
 
+@pytest.mark.asyncio
 async def test_get_oauth_url_value_error(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -154,11 +154,13 @@ async def test_get_oauth_url_value_error(
     assert "Client ID not configured" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_get_oauth_url_unauthenticated(async_client: AsyncClient) -> None:
     resp = await async_client.get("/api/v1/git/oauth-url")
     assert resp.status_code in (401, 403)
 
 
+@pytest.mark.asyncio
 async def test_oauth_callback_success(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.git_ops.GitHubClient.exchange_code",
@@ -174,6 +176,7 @@ async def test_oauth_callback_success(async_client: AsyncClient) -> None:
     assert resp.json()["access_token"] == "gho_fake_token_abc123"
 
 
+@pytest.mark.asyncio
 async def test_oauth_callback_value_error(async_client: AsyncClient) -> None:
     with patch(
         "app.api.v1.git_ops.GitHubClient.exchange_code",
@@ -194,6 +197,7 @@ async def test_oauth_callback_value_error(async_client: AsyncClient) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.asyncio
 async def test_clone_project_repo_fresh(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -218,6 +222,7 @@ async def test_clone_project_repo_fresh(
     mock_clone.assert_awaited_once()
 
 
+@pytest.mark.asyncio
 async def test_clone_project_repo_already_cloned(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -241,6 +246,7 @@ async def test_clone_project_repo_already_cloned(
     assert resp.json()["status"] == "updated"
 
 
+@pytest.mark.asyncio
 async def test_clone_project_repo_update_fails(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -265,6 +271,7 @@ async def test_clone_project_repo_update_fails(
     assert "Failed to update repository" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_clone_project_repo_clone_fails(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -289,6 +296,7 @@ async def test_clone_project_repo_clone_fails(
     assert "Clone failed" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_clone_project_repo_timeout(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -313,6 +321,7 @@ async def test_clone_project_repo_timeout(
     assert "Clone failed" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_clone_project_not_found(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -327,6 +336,7 @@ async def test_clone_project_not_found(
     assert resp.status_code == 404
 
 
+@pytest.mark.asyncio
 async def test_clone_fresh_calls_clone_repo(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -360,6 +370,7 @@ async def test_clone_fresh_calls_clone_repo(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.asyncio
 async def test_clone_status_cloned(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -381,6 +392,7 @@ async def test_clone_status_cloned(
     assert data["repo_path"] is not None
 
 
+@pytest.mark.asyncio
 async def test_clone_status_not_cloned(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -402,6 +414,7 @@ async def test_clone_status_not_cloned(
     assert data["repo_path"] is None
 
 
+@pytest.mark.asyncio
 async def test_clone_status_dir_exists_no_git(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -422,6 +435,7 @@ async def test_clone_status_dir_exists_no_git(
     assert resp.json()["cloned"] is False
 
 
+@pytest.mark.asyncio
 async def test_clone_status_project_not_found(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -440,6 +454,7 @@ async def test_clone_status_project_not_found(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.asyncio
 async def test_ticket_diff_success(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -481,6 +496,7 @@ async def test_ticket_diff_success(
     assert data["raw_diff"] == raw_diff
 
 
+@pytest.mark.asyncio
 async def test_ticket_diff_no_branch(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -498,6 +514,7 @@ async def test_ticket_diff_no_branch(
     assert "no associated branch" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_diff_repo_not_cloned(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -518,6 +535,7 @@ async def test_ticket_diff_repo_not_cloned(
     assert "not been cloned" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_diff_git_error(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -542,6 +560,7 @@ async def test_ticket_diff_git_error(
     assert "Failed to generate diff" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_diff_ticket_not_found(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -560,6 +579,7 @@ async def test_ticket_diff_ticket_not_found(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.asyncio
 async def test_ticket_changed_files_success(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -584,6 +604,7 @@ async def test_ticket_changed_files_success(
     assert resp.json()["files"] == ["foo.py", "bar.py"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_changed_files_no_branch(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -601,6 +622,7 @@ async def test_ticket_changed_files_no_branch(
     assert "no associated branch" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_changed_files_repo_not_cloned(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -621,6 +643,7 @@ async def test_ticket_changed_files_repo_not_cloned(
     assert "not been cloned" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_changed_files_git_error(
     async_client: AsyncClient,
     db_session: AsyncSession,
@@ -645,6 +668,7 @@ async def test_ticket_changed_files_git_error(
     assert "Failed to list changed files" in resp.json()["detail"]
 
 
+@pytest.mark.asyncio
 async def test_ticket_changed_files_ticket_not_found(
     async_client: AsyncClient,
     db_session: AsyncSession,

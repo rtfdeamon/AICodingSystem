@@ -16,9 +16,6 @@ from app.ci.deployer import (
     rollback,
 )
 
-pytestmark = pytest.mark.asyncio
-
-
 # ── Dataclass defaults ────────────────────────────────────────────────
 
 
@@ -46,6 +43,7 @@ def test_health_status_defaults() -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_deploy_staging_success(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "skipped"}
     result = await deploy_staging("org/repo", "feature-1", "abc123")
@@ -55,6 +53,7 @@ async def test_deploy_staging_success(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_deploy_staging_n8n_running(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "ok"}
     result = await deploy_staging("org/repo", "main", "def456")
@@ -62,6 +61,7 @@ async def test_deploy_staging_n8n_running(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_deploy_staging_failure(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "error", "detail": "Webhook failed"}
     result = await deploy_staging("org/repo", "main", "ghi789")
@@ -72,6 +72,7 @@ async def test_deploy_staging_failure(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_deploy_production_canary_success(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "skipped"}
     result = await deploy_production_canary("org/repo", "abc123", percentage=10)
@@ -80,6 +81,7 @@ async def test_deploy_production_canary_success(mock_trigger: AsyncMock) -> None
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_deploy_production_canary_clamps_percentage(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "skipped"}
     result = await deploy_production_canary("org/repo", "abc123", percentage=200)
@@ -90,6 +92,7 @@ async def test_deploy_production_canary_clamps_percentage(mock_trigger: AsyncMoc
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_deploy_production_canary_failure(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "error", "detail": "Error"}
     result = await deploy_production_canary("org/repo", "abc123")
@@ -100,6 +103,7 @@ async def test_deploy_production_canary_failure(mock_trigger: AsyncMock) -> None
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_promote_canary_partial(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "skipped"}
     result = await promote_canary("deploy-1", 50)
@@ -107,6 +111,7 @@ async def test_promote_canary_partial(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_promote_canary_full(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "skipped"}
     result = await promote_canary("deploy-1", 100)
@@ -114,6 +119,7 @@ async def test_promote_canary_full(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_promote_canary_failure(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "error"}
     result = await promote_canary("deploy-1", 50)
@@ -124,6 +130,7 @@ async def test_promote_canary_failure(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_rollback_success(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "skipped"}
     result = await rollback("deploy-1")
@@ -131,6 +138,7 @@ async def test_rollback_success(mock_trigger: AsyncMock) -> None:
 
 
 @patch("app.ci.deployer.trigger_workflow", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_rollback_failure(mock_trigger: AsyncMock) -> None:
     mock_trigger.return_value = {"status": "error", "detail": "Rollback failed"}
     result = await rollback("deploy-1")
@@ -141,6 +149,7 @@ async def test_rollback_failure(mock_trigger: AsyncMock) -> None:
 
 
 @patch("httpx.AsyncClient.get", new_callable=AsyncMock)
+@pytest.mark.asyncio
 async def test_check_health_monitoring_unavailable(mock_get: AsyncMock) -> None:
     """When Prometheus is unreachable, returns healthy defaults."""
     import httpx

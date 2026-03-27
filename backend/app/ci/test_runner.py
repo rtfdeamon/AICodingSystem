@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TestSuiteResult:
+    __test__ = False  # prevent pytest from collecting this dataclass
     """Aggregated result from a test suite run."""
 
     passed: bool

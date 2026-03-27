@@ -1,5 +1,104 @@
 # TODO
 
+## Ревизия на 2026-03-27 v17 (автоматический проход; coverage 93% → 96% + 113 новых тестов + 0 warnings + deprecation fixes + full docs)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **831 passed, 0 warnings** (было 718, +113 новых тестов)
+- `backend/.venv/bin/pytest --cov=backend/app --cov-report=term -q` -> **TOTAL 96%** (было 93%)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `backend/.venv/bin/mypy backend/app --ignore-missing-imports` -> **Success: no issues found in 96 source files**
+- `frontend: npx vitest run` -> **54 passed**
+- `frontend: npm run build` -> **OK**
+
+### Что сделано в этом проходе
+
+- [x] **Coverage: 93% → 96% (+113 новых backend тестов)**
+  - Новые тест-файлы:
+    - `tests/test_middleware/test_rate_limiter.py`: покрытие rate_limiter.py (54% → ~100%) — 22 теста, sliding window, profiles, headers, Redis errors
+    - `tests/test_api/test_comments.py`: покрытие comments.py (78% → ~100%) — 5 тестов, CRUD операции
+    - `tests/test_services/test_dashboard_service.py`: покрытие dashboard_service.py (81% → ~100%) — 16 тестов, pipeline stats, AI costs, code quality, deployment stats
+  - Расширенные тесты:
+    - `tests/test_agents/test_planning_agent.py`: покрытие planning_agent.py (68% → ~100%) — +17 тестов, generate_plan, version incrementing, null fields, prompt content
+    - `tests/test_api/test_deployments.py`: покрытие deployments.py (70% → ~100%) — +19 тестов, rollback, promote, health check, status guards
+    - `tests/test_api/test_users.py`: покрытие users.py (71% → ~100%) — +12 тестов, update self/other, role changes, RBAC enforcement
+    - `tests/test_api/test_webhooks.py`: покрытие webhooks.py (80% → ~100%) — +18 тестов, action mapping, signature verification, event types
+    - `tests/test_services/test_websocket_manager.py`: покрытие websocket_manager.py (77% → ~100%) — +7 тестов, subscribe_events, malformed JSON, Redis failure
+
+- [x] **Pytest warnings: 29 → 0**
+  - Убран `pytestmark = pytest.mark.asyncio` из 5 файлов с sync функциями:
+    - `test_agents/test_agent_providers.py`, `test_api/test_git_ops.py`
+    - `test_ci/test_builder.py`, `test_ci/test_deployer.py`, `test_ci/test_security_scanner.py`
+  - Добавлен `@pytest.mark.asyncio` только к async функциям в этих файлах
+  - Добавлен `__test__ = False` к 3 классам для предотвращения PytestCollectionWarning:
+    - `models/test_result.py::TestResult`, `ci/test_runner.py::TestSuiteResult`, `agents/test_gen_agent.py::TestFile`
+
+- [x] **Deprecation fixes**
+  - `datetime.utcnow()` → `datetime.now(UTC)` в notification_service.py и pipeline_orchestrator.py
+  - `HTTP_422_UNPROCESSABLE_ENTITY` → `HTTP_422_UNPROCESSABLE_CONTENT` в kanban_service.py и deployments.py
+
+- [x] **Lint: 0 issues (All checks passed!)**
+  - Import sorting исправлено в 3 файлах после agent work
+  - Исправлены F841, SIM117, E501 в новых тестах
+
+- [x] **Полная документация проекта**
+  - `README.md`: полное описание проекта, архитектуры, установки, API, тестирования
+  - `docs/ARCHITECTURE.md`: системные компоненты, data flow, pipeline, database schema, security, infrastructure
+  - `docs/DEVELOPMENT.md`: setup guide, code quality standards, testing conventions, debugging
+
+### Что осталось открытым (приоритет для следующего прохода)
+
+1. [x] ~~Coverage 93% → 95%~~ **ДОСТИГНУТО: 96%**
+2. [x] ~~Pytest warnings 29 → 0~~ **ДОСТИГНУТО: 0 warnings**
+3. [ ] **Real-time contract**: подключить `subscribeProject()`/`unsubscribeProject()` в KanbanBoard
+4. [ ] **Project context**: убрать `DEFAULT_PROJECT_ID='default'` и auto-create
+5. [ ] **Ticket artifact center**: подключить все вкладки TicketDetail к реальным API
+6. [ ] **AI review grounding**: подключить реальный git diff в review_agent
+7. [ ] **E2E tests**: установить Playwright browsers, запустить smoke с dev-сервером
+8. [ ] **Frontend component tests**: написать RTL тесты для LoginPage, KanbanBoard, TicketDetail
+
+### Best Practices Backlog (обновлено 2026-03-27 v17)
+
+#### AI Pipeline Best Practices (из интернет-источников 2025-2026)
+- [ ] **Three-layer review architecture**: real-time IDE feedback + PR-level AI analysis + periodic architectural reviews (verdent.ai, qodo.ai)
+- [ ] **CI feedback loops**: при падении CI прогонять ошибки обратно в AI agent для автоматического исправления (addyosmani.com, gocodeo.com)
+- [ ] **AI-on-AI code review**: два разных AI-агента ревьюят код друг друга для cross-check (augmentcode.com)
+- [ ] **Multi-model parallel execution**: запускать 2+ моделей параллельно для cross-check и fallback (faros.ai)
+- [ ] **AI code provenance tracking**: документировать происхождение AI-генерированного кода, edits, и rationale (getdx.com)
+- [ ] **Prompt injection testing**: тестировать AI pipeline на prompt injection уязвимости в CI (computerweekly.com)
+
+#### FastAPI Production Hardening (из интернет-источников 2025-2026)
+- [ ] **Disable docs in production**: отключить `/docs` и `/redoc` в production mode (fastlaunchapi.dev)
+- [ ] **Custom exception handlers**: sanitized error responses без stack traces в production (render.com)
+- [ ] **pip-audit integration**: регулярное сканирование dependencies на уязвимости в CI (VolkanSah/Securing-FastAPI-Applications)
+- [ ] **WAF + API gateway**: Kong или AWS API Gateway перед FastAPI в production (davidmuraya.com)
+- [ ] **Middleware ordering**: security middleware до business logic middleware (zhanymkanov/fastapi-best-practices)
+
+#### AI Agent Orchestration
+- [ ] Внедрить agent capability scoring: динамический выбор агента на основе исторических метрик успешности
+- [ ] Добавить structured output validation: JSON schema validation для ответов AI агентов
+- [ ] Реализовать agent response caching: кэширование для идентичных контекстов (ticket+diff hash)
+
+#### Code Quality Guardrails
+- [ ] Добавить AST-level validation для AI-генерированного кода
+- [ ] Внедрить diff size limits: автоматическое разбиение на chunks (<500 LOC per review)
+- [ ] Реализовать semantic diff comparison через embedding similarity
+
+#### Security
+- [ ] Добавить SBOM генерацию для AI-предложенных dependencies
+- [ ] Внедрить secret scanning в AI-генерированном коде до коммита
+- [ ] Реализовать sandbox execution для AI-сгенерированных тестов
+
+#### Observability
+- [ ] Добавить per-agent cost dashboards с alerts на budget thresholds
+- [ ] Внедрить quality regression tracking: AI ревью vs human ревью
+- [ ] Реализовать latency SLO tracking: <30s planning, <60s coding, <20s review
+
+#### Testing Best Practices
+- [ ] Внедрить `factory_boy` для генерации тестовых данных (pythoneo.com)
+- [ ] Генерировать HTML coverage reports в CI (pythoneo.com)
+
+---
+
 ## Ревизия на 2026-03-27 v16 (автоматический проход; coverage 87% → 93% + 77 новых тестов + lint clean + best practices update)
 
 Проверено командами:
