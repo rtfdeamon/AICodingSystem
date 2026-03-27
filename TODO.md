@@ -1,5 +1,95 @@
 # TODO
 
+## Ревизия на 2026-03-27 v28 (автоматический проход; 32 best practices + context management + cost tracking + 1842 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **1842 passed, 0 warnings** (было 1692, +150 новых тестов)
+- `backend/.venv/bin/ruff check backend/app backend/tests` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active — main bundle 377KB)
+
+### Что сделано в этом проходе
+
+- [x] **Context Window Manager** (`app/quality/context_window_manager.py`)
+  - Priority-scored context segments with position-aware placement
+  - "Lost in the middle" mitigation by placing critical info at edges
+  - Auto-compaction when approaching token limits
+  - Just-in-time lazy reference resolution for on-demand loading
+  - Segment deduplication (keeps highest priority)
+  - Relevance decay based on segment age and type
+  - Multiple compression strategies: dedup, remove low priority, truncate
+  - ~38 tests in `test_context_window_manager.py`
+
+- [x] **LLM Cost Tracker** (`app/observability/cost_tracker.py`)
+  - Per-request cost recording with model/team/feature/environment tags
+  - Model pricing table for Claude, GPT-4o, Gemini, o3-mini
+  - Daily/weekly/monthly budget caps with warn/block enforcement
+  - Budget utilization tracking with auto-alerting (80% warn, 100% critical)
+  - Tag-based cost attribution for chargebacks
+  - Spend analytics: summary by model/team/feature, top spenders, cache savings
+  - ~30 tests in `test_cost_tracker.py`
+
+- [x] **Output Schema Validator** (`app/quality/output_schema_validator.py`)
+  - JSON extraction from LLM output (direct, markdown blocks, embedded)
+  - Truncated JSON recovery (auto-close brackets)
+  - Type coercion for common LLM mistakes (string→int, string→bool, etc.)
+  - Field-level validation: required, enum, range, length, pattern
+  - Error feedback generation for reprompting
+  - Retry budget with validation error feedback to model
+  - Generator-critic validation pattern
+  - Schema registry for reusable output definitions
+  - ~45 tests in `test_output_schema_validator.py`
+
+- [x] **Code Attribution Tracker** (`app/quality/code_attribution.py`)
+  - Per-file/function authorship tracking (AI-generated, AI-assisted, human, mixed)
+  - Model and prompt hash recording for reproducibility
+  - License risk auto-assessment (GPL/AGPL/copyright detection)
+  - Human review status tracking with reviewer and timestamp
+  - Queries by file, ticket, project; unreviewed and high-risk filters
+  - Compliance report generation with configurable AI percentage limits
+  - ~37 tests in `test_code_attribution.py`
+
+- [x] **Lint: 0 issues (All checks passed!)**
+
+### Все 32 best practices реализованы
+
+Все 32 рекомендации из индустрии (2025-2026 best practices для AI coding систем) завершены:
+
+1. [x] ~~**Review: Context engine**~~ — **СДЕЛАНО v24**: `review_context.py`
+2. [x] ~~**Review: Developer feedback loop**~~ — **СДЕЛАНО v23**: `feedback_tracker.py`
+3. [x] ~~**Review: Negotiation workflows**~~ — **СДЕЛАНО v24**: `negotiation.py`
+4. [x] ~~**CI/CD: Intelligent test selection**~~ — **СДЕЛАНО v23**: `test_selector.py`
+5. [x] ~~**CI/CD: Self-healing tests**~~ — **СДЕЛАНО v24**: `self_healing.py`
+6. [x] ~~**QA: AI quality metrics dashboard**~~ — **СДЕЛАНО v23**: `ai_metrics.py`
+7. [x] ~~**QA: Duplication detection**~~ — **СДЕЛАНО v23**: `duplication_detector.py`
+8. [x] ~~**QA: Security scanning**~~ — **СДЕЛАНО v22**: `security_agent.py` + `security_scanner.py`
+9. [x] ~~**Observability: OpenTelemetry conventions**~~ — **СДЕЛАНО v24**: `otel_conventions.py`
+10. [x] ~~**Observability: Agent tracing**~~ — **СДЕЛАНО v24**: `agent_tracing.py`
+11. [x] ~~**Observability: Automated eval tests**~~ — **СДЕЛАНО v24**: `eval_tests.py`
+12. [x] ~~**Observability: PII leakage monitoring**~~ — **СДЕЛАНО v23**: `pii_monitor.py`
+13. [x] ~~**Prompt versioning & lifecycle**~~ — **СДЕЛАНО v25**: `prompt_versioning.py`
+14. [x] ~~**Semantic response cache**~~ — **СДЕЛАНО v25**: `semantic_cache.py`
+15. [x] ~~**Multi-model router with cost cascading**~~ — **СДЕЛАНО v25**: `model_router.py`
+16. [x] ~~**Hallucination detection pipeline**~~ — **СДЕЛАНО v25**: `hallucination_detector.py`
+17. [x] ~~**Token budget enforcer**~~ — **СДЕЛАНО v25**: `token_budget.py`
+18. [x] ~~**Shadow A/B testing**~~ — **СДЕЛАНО v25**: `shadow_testing.py`
+19. [x] ~~**Output drift detection**~~ — **СДЕЛАНО v25**: `drift_detector.py`
+20. [x] ~~**HITL escalation engine**~~ — **СДЕЛАНО v25**: `escalation_engine.py`
+21. [x] ~~**Prompt injection defense**~~ — **СДЕЛАНО v26**: `prompt_injection_guard.py`
+22. [x] ~~**Structured retry with backoff**~~ — **СДЕЛАНО v26**: `retry_strategy.py`
+23. [x] ~~**Immutable audit trail**~~ — **СДЕЛАНО v26**: `audit_trail.py`
+24. [x] ~~**AI code diff safety scanner**~~ — **СДЕЛАНО v26**: `diff_safety_scanner.py`
+25. [x] ~~**AI Bill of Materials (AI-BOM)**~~ — **СДЕЛАНО v27**: `ai_bom.py`
+26. [x] ~~**Hallucinated dependency detection**~~ — **СДЕЛАНО v27**: `dependency_verifier.py`
+27. [x] ~~**Spec-driven verification contracts**~~ — **СДЕЛАНО v27**: `spec_verifier.py`
+28. [x] ~~**Agent reasoning trace review**~~ — **СДЕЛАНО v27**: `reasoning_trace.py`
+29. [x] ~~**Context window management**~~ — **СДЕЛАНО v28**: `context_window_manager.py`
+30. [x] ~~**LLM cost tracking & budget governance**~~ — **СДЕЛАНО v28**: `cost_tracker.py`
+31. [x] ~~**Structured output schema validation**~~ — **СДЕЛАНО v28**: `output_schema_validator.py`
+32. [x] ~~**Code attribution & provenance tracking**~~ — **СДЕЛАНО v28**: `code_attribution.py`
+
+---
+
 ## Ревизия на 2026-03-27 v27 (автоматический проход; 28 best practices + AI-BOM + dependency verification + 1692 tests)
 
 Проверено командами:

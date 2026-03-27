@@ -275,9 +275,9 @@ npm run build        # TypeScript build check
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (28/28 Implemented)
+## Best Practices (32/32 Implemented)
 
-The system implements all 28 industry best practices for AI coding systems (2025-2026):
+The system implements all 32 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -309,6 +309,10 @@ The system implements all 28 industry best practices for AI coding systems (2025
 | 26 | Hallucinated Dependency Detection | `dependency_verifier.py` | v27 |
 | 27 | Spec-Driven Verification Contracts | `spec_verifier.py` | v27 |
 | 28 | Agent Reasoning Trace Review | `reasoning_trace.py` | v27 |
+| 29 | Context Window Management | `context_window_manager.py` | v28 |
+| 30 | LLM Cost Tracking & Budget Governance | `cost_tracker.py` | v28 |
+| 31 | Structured Output Schema Validation | `output_schema_validator.py` | v28 |
+| 32 | Code Attribution & Provenance | `code_attribution.py` | v28 |
 
 ## Monitoring
 
