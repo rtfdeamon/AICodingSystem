@@ -11,16 +11,14 @@ from app.quality.context_window_budget_manager import (
     ContextSection,
     ContextWindowBudgetManager,
     GateDecision,
-    SectionBudget,
+    SectionUsage,
     _compute_utilisation,
     _find_hotspot,
-    _grade_utilisation,
     _gate_from_grade,
+    _grade_utilisation,
     _section_priority,
     _simulate_compaction,
-    SectionUsage,
 )
-
 
 # ── Helper factory ────────────────────────────────────────────────────────
 

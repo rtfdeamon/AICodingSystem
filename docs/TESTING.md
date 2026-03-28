@@ -4,7 +4,7 @@
 
 | Layer | Framework | Tests | Coverage |
 |-------|-----------|-------|----------|
-| Backend | pytest + pytest-asyncio | 3272 | 96% |
+| Backend | pytest + pytest-asyncio | 3610 | 96% |
 | Frontend | Vitest + React Testing Library | 138 | - |
 | E2E | Playwright | 8 | - |
 | Lint | ruff (backend), ESLint (frontend) | 0 issues | - |

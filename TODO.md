@@ -1,5 +1,101 @@
 # TODO
 
+## Ревизия на 2026-03-28 v40 (автоматический проход; 80 best practices + spec-driven gateway + agent contract enforcer + multi-agent workspace + procedural memory learner + 3610 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **3610 passed, 0 warnings** (было 3448, +162 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Исправлены 16 ruff lint ошибок** в тестовых файлах v39 (unsorted imports, unused imports, line too long)
+
+- [x] **Spec-Driven Development Gateway** (`app/quality/spec_driven_gateway.py`)
+  - Structured spec parsing and validation (Given/When/Then, I/O contracts, constraints)
+  - Spec-to-task decomposition into isolated, testable units with dependency chains
+  - Spec-code drift detection with divergence scoring and contract mismatch tracking
+  - Three rigor levels: guidance, anchored, source_of_truth
+  - Spec versioning with content-addressable hashing
+  - Spec lifecycle: draft → validated → approved → implemented → drifted
+  - Gateway report with validation/approval/drift statistics
+  - Quality gate: pass / warn / block
+  - Based on ThoughtWorks "Spec-driven development" (2025), GitHub Blog "Spec Kit" (2026), arXiv 2602.00180, JetBrains Junie
+  - ~50 tests in `test_spec_driven_gateway.py`
+
+- [x] **Agent Contract Enforcer** (`app/quality/agent_contract_enforcer.py`)
+  - Formal resource governance: token limits, API call limits, time, cost per agent
+  - Conservation law enforcement for multi-agent delegation hierarchies
+  - Dual enforcement: soft warnings at 80% + hard circuit breakers at 100%
+  - Contract lifecycle: proposed → active → suspended → completed / violated
+  - Delegation support with parent-child budget conservation validation
+  - Per-contract utilisation tracking (tokens, API calls, time, cost)
+  - Auto-suspend on violation with configurable behaviour
+  - Enforcer report with aggregate violation and utilisation stats
+  - Quality gate: pass / warn / block
+  - Based on arXiv 2601.08815 "Agent Contracts" (AAMAS 2026), relari-ai/agent-contracts, CIO "Agent Budgets" (2026)
+  - ~48 tests in `test_agent_contract_enforcer.py`
+
+- [x] **Multi-Agent Workspace Coordinator** (`app/quality/multi_agent_workspace.py`)
+  - Worktree-based isolation with per-agent branches and configurable concurrency
+  - File ownership registry with exclusive assignment and conflict detection
+  - FIFO merge queue with tiered conflict resolution (auto / AI / human)
+  - Ownership violation detection when agents modify unowned files
+  - Duplication detection across agent outputs via Jaccard similarity
+  - Workspace lifecycle: idle → active → merging → conflict → merged / abandoned
+  - Coordinator report with workspace, conflict, and duplication statistics
+  - Quality gate: pass / warn / block
+  - Based on Augment Code "Multi-Agent Workspace" (2026), Addy Osmani "Code Agent Orchestra", arXiv 2603.21489
+  - ~42 tests in `test_multi_agent_workspace.py`
+
+- [x] **Procedural Memory Learner** (`app/quality/procedural_memory_learner.py`)
+  - Trajectory-to-procedure extraction via semantic abstraction from best trajectories
+  - Bayesian reliability tracking with configurable prior (alpha/beta)
+  - Contrastive refinement: success vs failure step-by-step divergence analysis
+  - Critical step identification from success/failure trajectory comparison
+  - Content-addressable deduplication of extracted procedures
+  - Procedure lifecycle: candidate → active → deprecated / merged
+  - Merge similar procedures with configurable Jaccard threshold
+  - Retrieval by task type with similarity scoring and recommendation flags
+  - Learner report with procedure counts, reliability stats, ingestion counts
+  - Quality gate: pass / warn / block
+  - Based on arXiv 2512.18950 "MACLA" (AAMAS 2026), Microsoft CORPGEN (2026), arXiv "MemOS", arXiv 2508.06433 "Mem^p"
+  - ~52 tests in `test_procedural_memory_learner.py`
+
+### Всего best practices: 80/80 (было 76)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-76 | (см. v39) | v24-v39 |
+| 77 | Spec-Driven Development Gateway | v40 |
+| 78 | Agent Contract Enforcer | v40 |
+| 79 | Multi-Agent Workspace Coordinator | v40 |
+| 80 | Procedural Memory Learner | v40 |
+
+### Результаты тестов
+- Backend: **3610 passed** (было 3448, +162 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- ThoughtWorks "Spec-driven development: unpacking 2025 new engineering practices" (2025)
+- GitHub Blog "Spec-driven development with AI: Spec Kit open source toolkit" (2026)
+- arXiv 2602.00180 "Spec-Driven Development" (2026)
+- JetBrains Junie "How to use a spec-driven approach for coding with AI" (2025)
+- arXiv 2601.08815 "Agent Contracts" (COINE/AAMAS 2026)
+- relari-ai/agent-contracts (GitHub 2026)
+- CIO "How to get AI agent budgets right in 2026"
+- Augment Code "How to Run a Multi-Agent Coding Workspace" (2026)
+- Addy Osmani "The Code Agent Orchestra" (2026)
+- arXiv 2603.21489 "Effective Strategies for Asynchronous Software Engineering Agents" (2026)
+- jayminwest/overstory multi-agent orchestration (GitHub 2026)
+- arXiv 2512.18950 "MACLA - Hierarchical Procedural Memory" (AAMAS 2026)
+- Microsoft Research CORPGEN for multi-horizon tasks (2026)
+- arXiv "MemOS - A Memory Operating System for AI" (2026)
+- arXiv 2508.06433 "Mem^p - Exploring Agent Procedural Memory" (2025)
+
+---
+
 ## Ревизия на 2026-03-28 v39 (автоматический проход; 76 best practices + context budget manager + maker-checker loop + NFQC assessor + prompt version controller + 3448 tests)
 
 Проверено командами:

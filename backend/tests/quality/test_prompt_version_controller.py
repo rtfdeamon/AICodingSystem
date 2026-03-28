@@ -2,23 +2,17 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.quality.prompt_version_controller import (
-    GateDecision,
-    PromptDiff,
     PromptEnvironment,
     PromptStatus,
     PromptVersion,
     PromptVersionController,
     RegistryConfig,
-    RegistryReport,
     SemanticVersion,
     _can_promote,
     _compute_diff,
     _content_hash,
 )
-
 
 # ── Helper factories ──────────────────────────────────────────────────────
 

@@ -5,13 +5,11 @@ from __future__ import annotations
 import pytest
 
 from app.quality.maker_checker_loop import (
-    BatchLoopReport,
     CheckCriterion,
     CheckResult,
     GateDecision,
     LoopConfig,
     LoopOutcome,
-    LoopSession,
     MakerCheckerLoop,
     _aggregate_feedback,
     _all_required_pass,
@@ -19,7 +17,6 @@ from app.quality.maker_checker_loop import (
     _detect_stagnation,
     _outcome_to_gate,
 )
-
 
 # ── Helper factories ──────────────────────────────────────────────────────
 
@@ -38,8 +35,14 @@ def _good_checks(score: float = 0.90) -> list[CheckResult]:
 
 def _bad_checks(score: float = 0.30) -> list[CheckResult]:
     return [
-        CheckResult(criterion=CheckCriterion.CORRECTNESS, passed=False, score=score, feedback="incorrect logic"),
-        CheckResult(criterion=CheckCriterion.COMPLETENESS, passed=False, score=score, feedback="missing edge cases"),
+        CheckResult(
+            criterion=CheckCriterion.CORRECTNESS,
+            passed=False, score=score, feedback="incorrect logic",
+        ),
+        CheckResult(
+            criterion=CheckCriterion.COMPLETENESS,
+            passed=False, score=score, feedback="missing edge cases",
+        ),
     ]
 
 
@@ -47,7 +50,10 @@ def _mixed_checks() -> list[CheckResult]:
     return [
         CheckResult(criterion=CheckCriterion.CORRECTNESS, passed=True, score=0.85),
         CheckResult(criterion=CheckCriterion.COMPLETENESS, passed=True, score=0.70),
-        CheckResult(criterion=CheckCriterion.STYLE, passed=False, score=0.40, feedback="inconsistent naming"),
+        CheckResult(
+            criterion=CheckCriterion.STYLE,
+            passed=False, score=0.40, feedback="inconsistent naming",
+        ),
     ]
 
 
@@ -70,7 +76,8 @@ class TestComputeOverallScore:
 class TestAllRequiredPass:
     def test_all_pass(self):
         results = _good_checks()
-        assert _all_required_pass(results, [CheckCriterion.CORRECTNESS, CheckCriterion.COMPLETENESS])
+        required = [CheckCriterion.CORRECTNESS, CheckCriterion.COMPLETENESS]
+        assert _all_required_pass(results, required)
 
     def test_missing_required(self):
         results = [CheckResult(criterion=CheckCriterion.STYLE, passed=True, score=0.9)]

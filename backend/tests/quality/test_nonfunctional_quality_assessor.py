@@ -5,8 +5,9 @@ from __future__ import annotations
 import pytest
 
 from app.quality.nonfunctional_quality_assessor import (
+    AI_CODE_SMELLS,
+    SECURITY_PATTERNS,
     AssessmentConfig,
-    AssessmentResult,
     CodeOrigin,
     CodeSample,
     GateDecision,
@@ -21,10 +22,7 @@ from app.quality.nonfunctional_quality_assessor import (
     _grade_score,
     _grade_to_gate,
     _max_nesting_depth,
-    AI_CODE_SMELLS,
-    SECURITY_PATTERNS,
 )
-
 
 # ── Helper factories ──────────────────────────────────────────────────────
 
