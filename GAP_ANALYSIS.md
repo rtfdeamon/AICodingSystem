@@ -7,7 +7,7 @@
 
 | Gate | Before | After v20 |
 |------|--------|-----------|
-| `pytest -q` | 26 failed / 11 passed | **3272 passed / 0 failed** |
+| `pytest -q` | 26 failed / 11 passed | **3448 passed / 0 failed** |
 | `npm run build` | TS errors | **Build OK (code-split chunks)** |
 | `vitest run` | 0 tests | **138+ passed** |
 | Auth flow | 500 on register | **Working (register + login + /me)** |

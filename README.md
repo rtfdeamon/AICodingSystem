@@ -69,11 +69,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
 │   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace, LLM judge
-│   │   ├── quality/           # 72 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter, semantic cache manager, token budget controller, CLEAR eval, risk-based guardrails, canary deployer, latency profiler, SLA monitor, consistency checker, reliability scorer, regression detector, trajectory evaluator, watermark tracker
+│   │   ├── quality/           # 76 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter, semantic cache manager, token budget controller, CLEAR eval, risk-based guardrails, canary deployer, latency profiler, SLA monitor, consistency checker, reliability scorer, regression detector, trajectory evaluator, watermark tracker, context window budget manager, maker-checker loop, NFQC assessor (ISO 25010), prompt version controller
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 3272 tests, 96% coverage
+│   ├── tests/                 # 3448 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -275,9 +275,9 @@ npm run build        # TypeScript build check
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (72/72 Implemented)
+## Best Practices (76/76 Implemented)
 
-The system implements all 72 industry best practices for AI coding systems (2025-2026):
+The system implements all 76 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -353,6 +353,10 @@ The system implements all 72 industry best practices for AI coding systems (2025
 | 70 | Prompt Regression Detector | `prompt_regression_detector.py` | v38 |
 | 71 | Agent Trajectory Evaluator | `agent_trajectory_evaluator.py` | v38 |
 | 72 | Output Watermark Tracker | `output_watermark_tracker.py` | v38 |
+| 73 | Context Window Budget Manager | `context_window_budget_manager.py` | v39 |
+| 74 | Maker-Checker Loop Orchestrator | `maker_checker_loop.py` | v39 |
+| 75 | Non-Functional Quality Assessor (ISO 25010) | `nonfunctional_quality_assessor.py` | v39 |
+| 76 | Prompt Version Controller | `prompt_version_controller.py` | v39 |
 
 ## Monitoring
 

@@ -1,5 +1,102 @@
 # TODO
 
+## Ревизия на 2026-03-28 v39 (автоматический проход; 76 best practices + context budget manager + maker-checker loop + NFQC assessor + prompt version controller + 3448 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **3448 passed, 0 warnings** (было 3272, +176 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Context Window Budget Manager** (`app/quality/context_window_budget_manager.py`)
+  - Per-section token budget allocation (system, rules, code, conversation, output)
+  - Real-time token usage tracking with budget enforcement
+  - Compaction strategies: truncation, summarisation, priority-based eviction, sliding window
+  - Budget utilisation analytics with hotspot detection
+  - Context overflow prevention with configurable safety margin (5%)
+  - Auto-compaction of over-budget sections (lowest priority first)
+  - Efficiency reporting across all registered agents
+  - Quality gate: within_budget / warning / over_budget / critical
+  - Based on Martin Fowler "Context Engineering for Coding Agents" (2026), Augment Code, Faros AI, UCStrategies
+  - ~38 tests in `test_context_window_budget_manager.py`
+
+- [x] **Maker-Checker Loop Orchestrator** (`app/quality/maker_checker_loop.py`)
+  - Structured maker-checker iteration with feedback propagation
+  - Configurable iteration cap (default 5) with fallback behaviour
+  - Per-iteration quality tracking with improvement detection
+  - Stagnation detection: abort if quality plateaus across rounds
+  - Checker criteria: correctness, completeness, style, safety, performance
+  - Escalation to human reviewer when quality gate not met at cap
+  - Session analytics with approval rate and avg iterations tracking
+  - Quality gate: approved / conditionally_approved / rejected / escalated / stagnated
+  - Based on Codebridge "Multi-Agent Orchestration Guide 2026", Microsoft Azure AI Patterns, Lyzr
+  - ~38 tests in `test_maker_checker_loop.py`
+
+- [x] **Non-Functional Quality Assessor** (`app/quality/nonfunctional_quality_assessor.py`)
+  - Six ISO/IEC 25010 NFQC dimensions: maintainability, readability, performance, security, reliability, testability
+  - Heuristic scoring per dimension (0-1) with weighted composite
+  - AI-typical code smell detection (10 patterns): bare excepts, debug prints, type:ignore, etc.
+  - Security pattern detection (6 patterns): eval, exec, shell injection, hardcoded secrets
+  - Cyclomatic complexity, nesting depth, function length estimation
+  - AI-generated vs human-written comparison with delta scoring
+  - Batch assessment with grade distribution and weakest/strongest dimension
+  - Quality gate: exemplary / acceptable / needs_improvement / poor
+  - Based on ISO/IEC 25010:2023, arXiv 2511.10271, arXiv 2505.13766, Addy Osmani, ContextQA
+  - ~52 tests in `test_nonfunctional_quality_assessor.py`
+
+- [x] **Prompt Version Controller** (`app/quality/prompt_version_controller.py`)
+  - Content-addressable prompt storage with SHA-256 hash deduplication
+  - Semantic versioning: major.minor.patch with auto-increment rules
+  - Environment promotion pipeline: dev → staging → prod with quality gates
+  - Prompt diff: line-level comparison between versions
+  - Rollback to previous version with deprecation and audit trail
+  - Approve/reject workflow with status tracking
+  - Auto-deprecation of old versions (configurable)
+  - Registry report with version & environment distribution
+  - Quality gate: approved / pending_review / rejected / deprecated
+  - Based on Maxim AI (2026), Langfuse, Braintrust, DasRoot "Prompt Versioning", Lakera
+  - ~48 tests in `test_prompt_version_controller.py`
+
+### Всего best practices: 76/76 (было 72)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-72 | (см. v38) | v24-v38 |
+| 73 | Context Window Budget Manager | v39 |
+| 74 | Maker-Checker Loop Orchestrator | v39 |
+| 75 | Non-Functional Quality Assessor (ISO 25010) | v39 |
+| 76 | Prompt Version Controller | v39 |
+
+### Результаты тестов
+- Backend: **3448 passed** (было 3272, +176 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- Martin Fowler "Context Engineering for Coding Agents" (2026)
+- Augment Code "11 Prompting Techniques for Better AI Agents" (2026)
+- Faros AI "Best AI Coding Agents 2026: Real-World Developer Reviews"
+- UCStrategies "Prompt Engineering Best Practices 2026"
+- DasRoot "Prompt Versioning: The Missing DevOps Layer in AI-Driven Ops" (Feb 2026)
+- Maxim AI "Top 5 Prompt Versioning Tools for Enterprise AI Teams 2026"
+- Langfuse "Prompt CMS" (2026)
+- Braintrust "Environment-Based Prompt Deployment" (2026)
+- Lakera "Ultimate Guide to Prompt Engineering 2026"
+- Codebridge "Multi-Agent Systems & AI Orchestration Guide 2026"
+- Microsoft Azure "AI Agent Design Patterns" (2026)
+- AI-AgentsPlus "Multi-Agent Orchestration Patterns" (2026)
+- Lyzr "Agent Orchestration 101: Making Multiple AI Agents Work as One" (2026)
+- n1n.ai "5 AI Agent Design Patterns to Master by 2026"
+- ISO/IEC 25010:2023 Software Quality Model
+- arXiv 2511.10271 "Quality Assurance of LLM-generated Code: NFQCs" (2025)
+- arXiv 2505.13766 "Standards-Focused Review of LLM-Based SQA" (2025)
+- Addy Osmani "My LLM Coding Workflow Going into 2026" (Medium)
+- ContextQA "LLM Testing Tools and Frameworks 2026"
+- Confident AI "LLM Testing in 2026: Top Methods and Strategies"
+
+---
+
 ## Ревизия на 2026-03-28 v38 (автоматический проход; 72 best practices + reliability scorer + regression detector + trajectory evaluator + watermark tracker + 3272 tests)
 
 Проверено командами:
