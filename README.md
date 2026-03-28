@@ -69,11 +69,11 @@ Stages marked with `*` are human gates requiring explicit approval.
 │   │   ├── middleware/        # Logging, rate limiting
 │   │   ├── models/            # SQLAlchemy ORM models (19 models)
 │   │   ├── observability/     # OpenTelemetry, agent tracing, eval tests, shadow A/B, drift detection, reasoning trace, LLM judge
-│   │   ├── quality/           # 64 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter, semantic cache manager, token budget controller, CLEAR eval framework, risk-based guardrail router
+│   │   ├── quality/           # 72 best practices: PII, hallucination, prompt versioning, injection guard, diff scanner, AI-BOM, dep verifier, spec verifier, guardrail orchestrator, sensitive zone, self-correction, agent sandbox, prompt optimizer, multi-agent consensus, tool gateway, GRASP, license compliance, DualGauge, agentic trust, efficiency analyzer, output grounding, agent memory, review scorer, SA feedback loop, regression guard, multi-model review router, agent safety evaluator, parallel guardrails, prompt drift monitor, agent entropy collector, diff size limiter, semantic cache manager, token budget controller, CLEAR eval, risk-based guardrails, canary deployer, latency profiler, SLA monitor, consistency checker, reliability scorer, regression detector, trajectory evaluator, watermark tracker
 │   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── services/          # Business logic (auth, kanban, dashboard...)
 │   │   └── workflows/         # Pipeline orchestrator, state machine, retry strategy
-│   ├── tests/                 # 2986 tests, 96% coverage
+│   ├── tests/                 # 3272 tests, 96% coverage
 │   └── alembic/               # Database migrations
 ├── frontend/                   # React + TypeScript frontend
 │   └── src/
@@ -275,9 +275,9 @@ npm run build        # TypeScript build check
 | Type check (mypy) | 96 files | 0 issues |
 | Structured output | PlanOutput + ReviewOutput | Pydantic validated |
 
-## Best Practices (64/64 Implemented)
+## Best Practices (72/72 Implemented)
 
-The system implements all 64 industry best practices for AI coding systems (2025-2026):
+The system implements all 72 industry best practices for AI coding systems (2025-2026):
 
 | # | Practice | Module | Version |
 |---|----------|--------|---------|
@@ -345,6 +345,14 @@ The system implements all 64 industry best practices for AI coding systems (2025
 | 62 | Token Budget Controller | `token_budget_controller.py` | v36 |
 | 63 | CLEAR Evaluation Framework | `clear_eval_framework.py` | v36 |
 | 64 | Risk-Based Guardrail Router | `risk_based_guardrail_router.py` | v36 |
+| 65 | Prompt Canary Deployer | `prompt_canary_deployer.py` | v37 |
+| 66 | Agent Latency Profiler | `agent_latency_profiler.py` | v37 |
+| 67 | Agent SLA Monitor | `agent_sla_monitor.py` | v37 |
+| 68 | Output Consistency Checker | `output_consistency_checker.py` | v37 |
+| 69 | Agent Reliability Scorer | `agent_reliability_scorer.py` | v38 |
+| 70 | Prompt Regression Detector | `prompt_regression_detector.py` | v38 |
+| 71 | Agent Trajectory Evaluator | `agent_trajectory_evaluator.py` | v38 |
+| 72 | Output Watermark Tracker | `output_watermark_tracker.py` | v38 |
 
 ## Monitoring
 

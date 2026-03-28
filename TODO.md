@@ -1,5 +1,101 @@
 # TODO
 
+## Ревизия на 2026-03-28 v38 (автоматический проход; 72 best practices + reliability scorer + regression detector + trajectory evaluator + watermark tracker + 3272 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **3272 passed, 0 warnings** (было 3143, +129 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Agent Reliability Scorer** (`app/quality/agent_reliability_scorer.py`)
+  - Multi-dimensional reliability assessment across 4 dimensions
+  - Consistency: variance in quality scores for repeated inputs
+  - Robustness: quality drop measurement under input perturbation
+  - Calibration: correlation between stated confidence and actual quality
+  - Safety: frequency and severity-weighted safety incident tracking
+  - Weighted composite score (30% consistency, 25% robustness, 20% calibration, 25% safety)
+  - Rolling reliability trending with direction detection (improving/stable/degrading)
+  - Batch evaluation with most/least reliable agent identification
+  - Quality gate: reliable / acceptable / fragile / unreliable
+  - Based on Fortune/Narayanan & Kapoor "AI Agent Reliability" (2026), Anthropic Evals, Galileo, Amazon
+  - ~35 tests in `test_agent_reliability_scorer.py`
+
+- [x] **Prompt Regression Detector** (`app/quality/prompt_regression_detector.py`)
+  - CI/CD-integrated prompt quality regression testing
+  - Baseline vs candidate prompt version comparison
+  - Multi-metric regression detection: quality, latency, cost, safety
+  - Statistical significance testing via two-proportion z-test
+  - Per-test-case regression tracking with improved/regressed classification
+  - Regression severity classification: none / minor / major / critical
+  - Batch regression comparison across all prompt families
+  - Quality gate: pass / warn / block
+  - Based on Traceloop "Automated Prompt Regression Testing" (2026), Confident AI, testRigor PromptOps
+  - ~30 tests in `test_prompt_regression_detector.py`
+
+- [x] **Agent Trajectory Evaluator** (`app/quality/agent_trajectory_evaluator.py`)
+  - Execution path evaluation for multi-step agent trajectories
+  - Step-by-step recording: reasoning, tool calls, decisions, errors, recovery
+  - Path efficiency: actual vs optimal steps, dead-end detection
+  - Tool call accuracy: fraction of successful, productive tool calls
+  - Error recovery scoring: recovery rate and steps spent recovering
+  - Reasoning quality scoring per step
+  - Detection of "correct outcome via bad trajectory" anti-pattern
+  - Batch evaluation across all trajectories
+  - Quality gate: optimal / efficient / wasteful / broken
+  - Based on Galileo Agent Eval Framework (2026), Anthropic Evals, Amazon, InfoQ
+  - ~32 tests in `test_agent_trajectory_evaluator.py`
+
+- [x] **Output Watermark Tracker** (`app/quality/output_watermark_tracker.py`)
+  - AI-generated code provenance and attribution tracking
+  - Unique watermark generation per AI output (hash-based)
+  - Provenance chain: model → prompt version → agent → file → function
+  - Code origin classification: ai_generated / human_written / ai_assisted / unknown
+  - Per-file attribution statistics with line-level granularity
+  - AI code coverage report across entire codebase
+  - Audit trail: created → reviewed → modified lifecycle tracking
+  - High-AI-coverage file detection with configurable thresholds
+  - Quality gate based on AI coverage percentage
+  - Based on Checkmarx AI Tools (2026), OpenSSF Security Guide, CodeScene, Stack Overflow
+  - ~32 tests in `test_output_watermark_tracker.py`
+
+### Всего best practices: 72/72 (было 68)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-68 | (см. v37) | v24-v37 |
+| 69 | Agent Reliability Scorer | v38 |
+| 70 | Prompt Regression Detector | v38 |
+| 71 | Agent Trajectory Evaluator | v38 |
+| 72 | Output Watermark Tracker | v38 |
+
+### Результаты тестов
+- Backend: **3272 passed** (было 3143, +129 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- Fortune / Narayanan & Kapoor "AI Agent Reliability" (Mar 2026)
+- Checkmarx "Top 12 AI Developer Tools in 2026"
+- CodeScene "Agentic AI Coding: Best Practice Patterns" (2026)
+- OpenSSF "Security-Focused Guide for AI Code Assistant Instructions" (2026)
+- LangChain "State of Agent Engineering" (2026)
+- Stack Overflow "Are Bugs Inevitable with AI Coding Agents?" (Jan 2026)
+- Anthropic "Demystifying Evals for AI Agents" (2026)
+- Galileo "Agent Evaluation Framework: Metrics, Rubrics & Benchmarks" (2026)
+- Amazon "Evaluating AI Agents: Real-world Lessons" (2026)
+- InfoQ "Evaluating AI Agents in Practice" (2026)
+- Evidently AI "10 AI Agent Benchmarks" (2026)
+- Traceloop "Automated Prompt Regression Testing with LLM-as-a-Judge" (2026)
+- Confident AI "Best LLM Observability Platforms" (2026)
+- testRigor "Why DevOps Needs a PromptOps Layer" (2026)
+- Maxim AI "Top 5 Prompt Engineering Platforms" (2026)
+- Braintrust "AI Observability Tools" (2026)
+- Datadog "LLM Guardrails Best Practices" (2026)
+
+---
+
 ## Ревизия на 2026-03-28 v37 (автоматический проход; 68 best practices + canary deployer + latency profiler + SLA monitor + consistency checker + 3143 tests)
 
 Проверено командами:
