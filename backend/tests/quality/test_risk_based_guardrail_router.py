@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 from app.quality.risk_based_guardrail_router import (
     BatchGuardrailReport,
     CheckResult,
     GateDecision,
-    GuardrailCheck,
     GuardrailResult,
     GuardrailTier,
     RiskAssessment,
@@ -21,7 +18,6 @@ from app.quality.risk_based_guardrail_router import (
     _check_toxicity,
     _classify_risk,
 )
-
 
 # ── Risk classification ──────────────────────────────────────────────────
 

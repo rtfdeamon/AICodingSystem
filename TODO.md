@@ -1,5 +1,99 @@
 # TODO
 
+## Ревизия на 2026-03-28 v37 (автоматический проход; 68 best practices + canary deployer + latency profiler + SLA monitor + consistency checker + 3143 tests)
+
+Проверено командами:
+- `backend/.venv/bin/pytest -q` -> **3143 passed, 0 warnings** (было 2986, +157 новых тестов)
+- `ruff check backend/app/ backend/tests/` -> **All checks passed!**
+- `frontend: npx vitest run` -> **138 passed**
+- `frontend: npm run build` -> **OK** (code splitting active)
+
+### Что сделано в этом проходе
+
+- [x] **Prompt Canary Deployer** (`app/quality/prompt_canary_deployer.py`)
+  - Canary deployment strategy for prompt version changes
+  - Traffic splitting with configurable canary percentage (1–50%)
+  - Multi-metric health checks: quality, latency, cost, error rate
+  - Automatic rollback when any metric breaches threshold
+  - Gradual ramp-up schedule (5% → 10% → 25% → 50% → 100%)
+  - A/B comparison reports with z-test statistical significance
+  - Rollback audit trail with full history
+  - Quality gate: promote / hold / rollback
+  - Based on Braintrust "Prompt Management" (2026), Maxim.ai, LangWatch, GPT-4o rollback lessons
+  - ~38 tests in `test_prompt_canary_deployer.py`
+
+- [x] **Agent Latency Profiler** (`app/quality/agent_latency_profiler.py`)
+  - Per-stage latency recording: prompt_build, api_call, response_parse, validation, post_processing
+  - P50 / P95 / P99 percentile computation per stage
+  - Bottleneck detection: identifies which stage dominates total latency
+  - SLA breach detection with configurable P95 threshold
+  - Optimization suggestions per bottleneck stage (caching, streaming, parallel)
+  - Rolling window analysis with configurable window size
+  - Batch profiling across multiple agents with fastest/slowest ranking
+  - Quality gate: fast / acceptable / slow / critical
+  - Based on AIMultiple LLM Latency Benchmark (2026), RunPod, Redis Token Optimization, Clarifai
+  - ~30 tests in `test_agent_latency_profiler.py`
+
+- [x] **Agent SLA Monitor** (`app/quality/agent_sla_monitor.py`)
+  - Per-agent SLA contract definition (latency P95, quality floor, cost ceiling, error rate, availability)
+  - Continuous monitoring with rolling window evaluation
+  - Error budget computation and burn-rate tracking
+  - Breach severity classification (minor / major / critical)
+  - Incident-style breach records for audit trail
+  - Default contracts with sensible production defaults
+  - Batch SLA evaluation across all registered agents
+  - Quality gate: compliant / at_risk / breached
+  - Based on UptimeRobot AI Monitoring (2026), Braintrust, OpenTelemetry, Galileo, Andrii Furmanets
+  - ~28 tests in `test_agent_sla_monitor.py`
+
+- [x] **Output Consistency Checker** (`app/quality/output_consistency_checker.py`)
+  - Cross-run output consistency validation for identical prompts
+  - Structural similarity via pairwise Jaccard on token sets
+  - Categorical agreement tracking (output type consistency)
+  - Determinism score: 0 (random) to 1 (perfectly consistent), 70/30 structural/categorical weighting
+  - Variance hotspot identification by prompt / agent
+  - Batch consistency report across all prompt families
+  - Quality gate: deterministic / acceptable / volatile / unstable
+  - Based on arXiv:2511.10271 "QA of LLM-generated Code", CodeScene, Propel, OneReach
+  - ~31 tests in `test_output_consistency_checker.py`
+
+### Всего best practices: 68/68 (было 64)
+| # | Best Practice | Версия |
+|---|---|---|
+| 1-64 | (см. v36) | v24-v36 |
+| 65 | Prompt Canary Deployer | v37 |
+| 66 | Agent Latency Profiler | v37 |
+| 67 | Agent SLA Monitor | v37 |
+| 68 | Output Consistency Checker | v37 |
+
+### Результаты тестов
+- Backend: **3143 passed** (было 2986, +157 новых)
+- Frontend: **138 passed**
+- Lint: **All checks passed!**
+
+### Интернет-источники для этого прохода (2025-2026)
+- Braintrust "What is Prompt Management?" (2026)
+- Maxim.ai "Managing Prompt Versions: Effective Strategies for Large Teams" (2026)
+- LangWatch "Prompt Management: Version, Control & Deploy" (2026)
+- NJ Raman "Versioning, Rollback & Lifecycle Management of AI Agents" (2026)
+- GPT-4o sycophancy rollback incident analysis (April 2025)
+- AIMultiple "LLM Latency Benchmark by Use Cases in 2026"
+- RunPod "LLM Inference Optimization" (2026)
+- TrySight "Best LLM Optimization Strategies" (2026)
+- Redis "LLM Token Optimization: Cut Costs & Latency in 2026"
+- Clarifai "LLM Inference Optimization Techniques" (2026)
+- UptimeRobot "AI Agent Monitoring: Best Practices, Tools, and Metrics" (2026)
+- Braintrust "AI Observability Tools: A Buyer's Guide" (2026)
+- OpenTelemetry "AI Agent Observability — Evolving Standards" (2025)
+- Galileo "6 Best AI Agent Monitoring Tools for Production" (2026)
+- Andrii Furmanets "AI Agents 2026: Practical Architecture" (2026)
+- arXiv:2511.10271 "Quality Assurance of LLM-generated Code" (Nov 2025)
+- CodeScene "Agentic AI Coding: Best Practice Patterns" (2026)
+- Propel "Agentic Engineering Code Review Guardrails" (2026)
+- OneReach "Best Practices for AI Agent Implementations" (2026)
+
+---
+
 ## Ревизия на 2026-03-28 v36 (автоматический проход; 64 best practices + semantic cache + token budget + CLEAR eval + risk guardrail router + 2986 tests)
 
 Проверено командами:

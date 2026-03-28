@@ -8,7 +8,6 @@ from app.quality.semantic_cache_manager import (
     BatchCacheReport,
     CacheEntry,
     CacheLayer,
-    CacheLookupResult,
     CacheStats,
     GateDecision,
     SemanticCacheManager,
@@ -17,7 +16,6 @@ from app.quality.semantic_cache_manager import (
     _longest_common_prefix_len,
     _simple_embedding,
 )
-
 
 # ── Helper tests ─────────────────────────────────────────────────────────
 

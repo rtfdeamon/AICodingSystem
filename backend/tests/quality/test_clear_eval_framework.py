@@ -9,10 +9,8 @@ from app.quality.clear_eval_framework import (
     CLEAREvalFramework,
     CLEARScore,
     Dimension,
-    DimensionScore,
     GateDecision,
     Trend,
-    TrendAnalysis,
     _score_assurance,
     _score_cost,
     _score_efficacy,
@@ -20,7 +18,6 @@ from app.quality.clear_eval_framework import (
     _score_reliability,
     _weighted_harmonic_mean,
 )
-
 
 # ── Scoring helpers ──────────────────────────────────────────────────────
 
