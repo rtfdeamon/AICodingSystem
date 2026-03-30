@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Management - AI Coding Pipeline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F9FAFB;
+    color: #111827;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 256px;
+    background: #fff;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 20;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .sidebar-logo h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4F46E5;
+    line-height: 1.3;
+  }
+  .sidebar-logo span {
+    color: #6B7280;
+    font-weight: 400;
+  }
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4B5563;
+    text-decoration: none;
+    margin-bottom: 2px;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: #F3F4F6; }
+  .nav-item.active {
+    background: #EEF2FF;
+    color: #4F46E5;
+    font-weight: 600;
+  }
+  .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid #E5E7EB;
+  }
+
+  /* Header */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 256px;
+    right: 0;
+    height: 64px;
+    background: #fff;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 10;
+  }
+  .header-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 8px 12px;
+    width: 280px;
+  }
+  .header-search input {
+    border: none;
+    background: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: #6B7280;
+    width: 100%;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .header-icon:hover { background: #F3F4F6; }
+  .wifi-dot {
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
+    border-radius: 50%;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+  .badge-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #EF4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+  .user-profile:hover { background: #F3F4F6; }
+  .user-avatar-header {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #4F46E5;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .user-profile-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  /* Main Content */
+  .main {
+    margin-left: 256px;
+    margin-top: 64px;
+    padding: 24px;
+    flex: 1;
+  }
+
+  /* Page Header */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .page-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #E0E7FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: #6B7280;
+    margin-top: 2px;
+  }
+
+  /* Search */
+  .search-bar {
+    margin-bottom: 16px;
+  }
+  .search-bar input {
+    width: 320px;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239CA3AF' stroke-linecap='round' stroke-width='1.5' d='m13 13 4 4M8.5 3a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z'/%3E%3C/svg%3E") 10px center / 18px no-repeat;
+  }
+  .search-bar input:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+  }
+
+  /* Table Card */
+  .table-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    background: #F9FAFB;
+    padding: 12px 24px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  thead th:last-child { text-align: right; }
+  tbody tr {
+    border-bottom: 1px solid #F3F4F6;
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: #F9FAFB; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td {
+    padding: 16px 24px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  tbody td:last-child { text-align: right; }
+
+  .user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .user-name { font-weight: 500; color: #111827; }
+  .user-email { color: #6B7280; }
+
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover {
+    background: #F3F4F6;
+    color: #374151;
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>AI Coding<br><span>Pipeline</span></h1>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="#">
+      <span class="icon">📋</span> Board
+    </a>
+    <a class="nav-item" href="#">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    <a class="nav-item active" href="#">
+      <span class="icon">👥</span> Users
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="nav-item" href="#">
+      <span class="icon">ℹ️</span> About
+    </a>
+    <a class="nav-item" href="#">
+      <span class="icon">⚙️</span> Settings
+    </a>
+  </div>
+</aside>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-search">
+    <span style="color:#9CA3AF;font-size:16px;">🔍</span>
+    <input type="text" placeholder="Search...">
+  </div>
+  <div class="header-right">
+    <div class="header-icon">
+      📶
+      <span class="wifi-dot"></span>
+    </div>
+    <div class="header-icon">
+      🔔
+      <span class="badge-count">3</span>
+    </div>
+    <div class="user-profile">
+      <div class="user-avatar-header">AK</div>
+      <span class="user-profile-name">Alex Kim</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main">
+  <div class="page-header">
+    <div class="page-icon">👥</div>
+    <div>
+      <h1>User Management</h1>
+      <p>Manage team members and their roles</p>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" placeholder="Search users...">
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar" style="background:#4F46E5;">AK</div>
+              <span class="user-name">Alex Kim</span>
+            </div>
+          </td>
+          <td class="user-email">alex.kim@company.com</td>
+          <td>
+            <span class="role-badge" style="background:#FEF2F2;color:#DC2626;">
+              🛡 owner
+            </span>
+          </td>
+          <td><button class="btn-ghost">Edit Role</button></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar" style="background:#7C3AED;">MR</div>
+              <span class="user-name">Maria Rodriguez</span>
+            </div>
+          </td>
+          <td class="user-email">maria.r@company.com</td>
+          <td>
+            <span class="role-badge" style="background:#F5F3FF;color:#7C3AED;">
+              pm lead
+            </span>
+          </td>
+          <td><button class="btn-ghost">Edit Role</button></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar" style="background:#3B82F6;">SK</div>
+              <span class="user-name">Sarah Kim</span>
+            </div>
+          </td>
+          <td class="user-email">sarah.k@company.com</td>
+          <td>
+            <span class="role-badge" style="background:#EEF2FF;color:#4F46E5;">
+              developer
+            </span>
+          </td>
+          <td><button class="btn-ghost">Edit Role</button></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar" style="background:#22C55E;">LN</div>
+              <span class="user-name">Liam Nguyen</span>
+            </div>
+          </td>
+          <td class="user-email">liam.n@company.com</td>
+          <td>
+            <span class="role-badge" style="background:#EEF2FF;color:#4F46E5;">
+              developer
+            </span>
+          </td>
+          <td><button class="btn-ghost">Edit Role</button></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar" style="background:#10B981;font-size:18px;">🤖</div>
+              <span class="user-name">AI Agent</span>
+            </div>
+          </td>
+          <td class="user-email">agent@system.internal</td>
+          <td>
+            <span class="role-badge" style="background:#F0FDF4;color:#16A34A;">
+              ai agent
+            </span>
+          </td>
+          <td><button class="btn-ghost">Edit Role</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+</body>
+</html>

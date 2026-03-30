@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Coding Pipeline - Board</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F9FAFB;
+    color: #111827;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Layout ── */
+  .app-shell {
+    display: flex;
+    height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 256px;
+    min-width: 256px;
+    background: #fff;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .sidebar-logo {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: #4F46E5;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .logo-text-primary {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111827;
+  }
+
+  .logo-text-secondary {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6B7280;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover {
+    background: #F3F4F6;
+    color: #374151;
+  }
+
+  .nav-item.active {
+    background: #EEF2FF;
+    color: #4338CA;
+    font-weight: 600;
+  }
+
+  .nav-item .nav-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid #E5E7EB;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* ── Main area ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /* ── Header ── */
+  .header {
+    height: 64px;
+    min-height: 64px;
+    background: #fff;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+
+  .search-box {
+    position: relative;
+    width: 320px;
+  }
+
+  .search-box input {
+    width: 100%;
+    height: 40px;
+    padding: 0 14px 0 40px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #F9FAFB;
+    color: #374151;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .search-box input::placeholder { color: #9CA3AF; }
+
+  .search-box input:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    background: #fff;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #9CA3AF;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6B7280;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
+    border-radius: 50%;
+  }
+
+  .notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    color: #6B7280;
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    background: #EF4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+  }
+
+  .user-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+
+  .user-menu:hover { background: #F3F4F6; }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .user-chevron {
+    font-size: 10px;
+    color: #9CA3AF;
+  }
+
+  /* ── Content ── */
+  .content {
+    flex: 1;
+    background: #F9FAFB;
+    padding: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .content-header-left h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    display: inline;
+  }
+
+  .content-header-left .project-label {
+    font-size: 14px;
+    color: #9CA3AF;
+    margin-left: 12px;
+    font-weight: 400;
+  }
+
+  .content-subtitle {
+    font-size: 14px;
+    color: #9CA3AF;
+    margin-bottom: 20px;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: #4F46E5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-primary:hover { background: #4338CA; }
+
+  /* ── Board ── */
+  .board-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+  }
+
+  .board-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+  .board-scroll::-webkit-scrollbar-track {
+    background: #E5E7EB;
+    border-radius: 4px;
+  }
+  .board-scroll::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+  }
+  .board-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
+
+  .board {
+    display: flex;
+    gap: 16px;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* ── Column ── */
+  .column {
+    min-width: 280px;
+    width: 280px;
+    background: #F3F4F6;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+  }
+
+  .column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .col-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .col-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+  }
+
+  .col-shield {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .col-count {
+    margin-left: auto;
+    min-width: 22px;
+    height: 22px;
+    background: #E5E7EB;
+    color: #6B7280;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .column-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 2px;
+  }
+
+  .column-cards::-webkit-scrollbar { width: 4px; }
+  .column-cards::-webkit-scrollbar-track { background: transparent; }
+  .column-cards::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 2px; }
+
+  /* ── Card ── */
+  .card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #D1D5DB;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .priority-badge .pdot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .priority-p0 { background: #FEF2F2; color: #DC2626; }
+  .priority-p0 .pdot { background: #DC2626; }
+  .priority-p1 { background: #FFF7ED; color: #EA580C; }
+  .priority-p1 .pdot { background: #F97316; }
+  .priority-p2 { background: #FFFBEB; color: #CA8A04; }
+  .priority-p2 .pdot { background: #EAB308; }
+  .priority-p3 { background: #F0FDF4; color: #16A34A; }
+  .priority-p3 .pdot { background: #22C55E; }
+
+  .story-points {
+    background: #F3F4F6;
+    color: #6B7280;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1F2937;
+    margin-bottom: 4px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: #9CA3AF;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .label-pill {
+    background: #F3F4F6;
+    color: #6B7280;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .avatar-empty {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px dashed #D1D5DB;
+    flex-shrink: 0;
+  }
+
+  .card-time {
+    font-size: 10px;
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    border: 2px dashed #D1D5DB;
+    border-radius: 10px;
+    padding: 32px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* ── Avatar colors ── */
+  .avatar-ak { background: #4F46E5; }
+  .avatar-mr { background: #0891B2; }
+  .avatar-sk { background: #7C3AED; }
+  .avatar-ln { background: #059669; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">AI</div>
+      <div class="logo-text">
+        <span class="logo-text-primary">AI Coding</span>
+        <span class="logo-text-secondary">Pipeline</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="#">
+        <span class="nav-icon">&#x1F4CB;</span>
+        <span>Board</span>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F4CA;</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x1F465;</span>
+        <span>Users</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x2139;&#xFE0F;</span>
+        <span>About</span>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#x2699;&#xFE0F;</span>
+        <span>Settings</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Header -->
+    <header class="header">
+      <div class="search-box">
+        <span class="search-icon">&#x1F50D;</span>
+        <input type="text" placeholder="Search tickets...">
+      </div>
+      <div class="header-right">
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>Connected</span>
+        </div>
+        <button class="notification-btn">
+          &#x1F514;
+          <span class="notification-badge">3</span>
+        </button>
+        <div class="user-menu">
+          <div class="user-avatar avatar-ak">AK</div>
+          <span class="user-name">Alex Kim</span>
+          <span class="user-chevron">&#x25BC;</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="content-header">
+        <div class="content-header-left">
+          <h1>Board</h1>
+          <span class="project-label">My Project</span>
+        </div>
+        <button class="btn-primary">+ New Ticket</button>
+      </div>
+      <p class="content-subtitle">Drag tickets between columns to update their status</p>
+
+      <!-- Board -->
+      <div class="board-scroll">
+        <div class="board">
+
+          <!-- 1. Backlog -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#6B7280"></span>
+              <span class="col-label">Backlog</span>
+              <span class="col-count">3</span>
+            </div>
+            <div class="column-cards">
+              <!-- Card -->
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p1"><span class="pdot"></span>P1</span>
+                  <span class="story-points">3 pts</span>
+                </div>
+                <div class="card-title">Setup CI/CD pipeline for staging</div>
+                <div class="card-desc">Configure GitHub Actions workflow for automated deployments to staging environment</div>
+                <div class="card-labels">
+                  <span class="label-pill">devops</span>
+                  <span class="label-pill">infra</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-mr">MR</div>
+                  <span class="card-time">&#x1F550; 2h ago</span>
+                </div>
+              </div>
+              <!-- Card -->
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p2"><span class="pdot"></span>P2</span>
+                  <span class="story-points">5 pts</span>
+                </div>
+                <div class="card-title">Add dark mode support</div>
+                <div class="card-desc">Implement theme switching with persistent user preference storage</div>
+                <div class="card-labels">
+                  <span class="label-pill">frontend</span>
+                  <span class="label-pill">ui</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-sk">SK</div>
+                  <span class="card-time">&#x1F550; 5h ago</span>
+                </div>
+              </div>
+              <!-- Card -->
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p3"><span class="pdot"></span>P3</span>
+                </div>
+                <div class="card-title">Update API documentation</div>
+                <div class="card-desc">Swagger docs need updating for v2 endpoints and new auth flows</div>
+                <div class="card-labels">
+                  <span class="label-pill">docs</span>
+                </div>
+                <div class="card-footer">
+                  <div class="avatar-empty"></div>
+                  <span class="card-time">&#x1F550; 1d ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. AI Planning -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#3B82F6"></span>
+              <span class="col-label">AI Planning</span>
+              <span class="col-count">2</span>
+            </div>
+            <div class="column-cards">
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p0"><span class="pdot"></span>P0</span>
+                  <span class="story-points">8 pts</span>
+                </div>
+                <div class="card-title">Fix payment gateway timeout</div>
+                <div class="card-desc">Users report 504 errors during checkout when processing large orders</div>
+                <div class="card-labels">
+                  <span class="label-pill">backend</span>
+                  <span class="label-pill">urgent</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-ak">AK</div>
+                  <span class="card-time">&#x1F550; 30m ago</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p2"><span class="pdot"></span>P2</span>
+                  <span class="story-points">5 pts</span>
+                </div>
+                <div class="card-title">Implement search filters</div>
+                <div class="card-desc">Add advanced filtering options for search results including date range and categories</div>
+                <div class="card-labels">
+                  <span class="label-pill">frontend</span>
+                  <span class="label-pill">api</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-ln">LN</div>
+                  <span class="card-time">&#x1F550; 3h ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Plan Review -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#8B5CF6"></span>
+              <span class="col-label">Plan Review</span>
+              <span class="col-shield">&#x1F6E1;</span>
+              <span class="col-count">1</span>
+            </div>
+            <div class="column-cards">
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p1"><span class="pdot"></span>P1</span>
+                  <span class="story-points">8 pts</span>
+                </div>
+                <div class="card-title">User notification system</div>
+                <div class="card-desc">Real-time notifications via WebSocket with fallback to polling</div>
+                <div class="card-labels">
+                  <span class="label-pill">backend</span>
+                  <span class="label-pill">websocket</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-mr">MR</div>
+                  <span class="card-time">&#x1F550; 1h ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. AI Coding -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#F59E0B"></span>
+              <span class="col-label">AI Coding</span>
+              <span class="col-count">2</span>
+            </div>
+            <div class="column-cards">
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p1"><span class="pdot"></span>P1</span>
+                  <span class="story-points">5 pts</span>
+                </div>
+                <div class="card-title">Implement user auth middleware</div>
+                <div class="card-desc">JWT validation and role-based access control for all protected routes</div>
+                <div class="card-labels">
+                  <span class="label-pill">backend</span>
+                  <span class="label-pill">security</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-ak">AK</div>
+                  <span class="card-time">&#x1F550; 45m ago</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p2"><span class="pdot"></span>P2</span>
+                  <span class="story-points">3 pts</span>
+                </div>
+                <div class="card-title">Dashboard chart components</div>
+                <div class="card-desc">Create reusable chart components for analytics dashboard</div>
+                <div class="card-labels">
+                  <span class="label-pill">frontend</span>
+                  <span class="label-pill">dashboard</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-sk">SK</div>
+                  <span class="card-time">&#x1F550; 2h ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Code Review -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#EC4899"></span>
+              <span class="col-label">Code Review</span>
+              <span class="col-shield">&#x1F6E1;</span>
+              <span class="col-count">1</span>
+            </div>
+            <div class="column-cards">
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p1"><span class="pdot"></span>P1</span>
+                  <span class="story-points">5 pts</span>
+                </div>
+                <div class="card-title">API rate limiting</div>
+                <div class="card-desc">Implement Redis-based rate limiting with sliding window algorithm</div>
+                <div class="card-labels">
+                  <span class="label-pill">backend</span>
+                  <span class="label-pill">security</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-ln">LN</div>
+                  <span class="card-time">&#x1F550; 4h ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Staging -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#10B981"></span>
+              <span class="col-label">Staging</span>
+              <span class="col-count">1</span>
+            </div>
+            <div class="column-cards">
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p2"><span class="pdot"></span>P2</span>
+                  <span class="story-points">3 pts</span>
+                </div>
+                <div class="card-title">Email template system</div>
+                <div class="card-desc">HTML email templates with variable substitution and preview support</div>
+                <div class="card-labels">
+                  <span class="label-pill">backend</span>
+                  <span class="label-pill">email</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-mr">MR</div>
+                  <span class="card-time">&#x1F550; 6h ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Staging Verification -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#EF4444"></span>
+              <span class="col-label">Staging Verification</span>
+              <span class="col-count">0</span>
+            </div>
+            <div class="column-cards">
+              <div class="empty-state">No tickets</div>
+            </div>
+          </div>
+
+          <!-- 8. Production -->
+          <div class="column">
+            <div class="column-header">
+              <span class="col-dot" style="background:#22C55E"></span>
+              <span class="col-label">Production</span>
+              <span class="col-count">2</span>
+            </div>
+            <div class="column-cards">
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p2"><span class="pdot"></span>P2</span>
+                  <span class="story-points">5 pts</span>
+                </div>
+                <div class="card-title">User profile page</div>
+                <div class="card-desc">Profile editing with avatar upload and account preferences</div>
+                <div class="card-labels">
+                  <span class="label-pill">frontend</span>
+                  <span class="label-pill">api</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-ak">AK</div>
+                  <span class="card-time">&#x1F550; 2d ago</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-top">
+                  <span class="priority-badge priority-p3"><span class="pdot"></span>P3</span>
+                  <span class="story-points">2 pts</span>
+                </div>
+                <div class="card-title">Logging improvements</div>
+                <div class="card-desc">Structured JSON logging with correlation IDs and log levels</div>
+                <div class="card-labels">
+                  <span class="label-pill">backend</span>
+                  <span class="label-pill">devops</span>
+                </div>
+                <div class="card-footer">
+                  <div class="card-avatar avatar-ln">LN</div>
+                  <span class="card-time">&#x1F550; 3d ago</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - AI Coding Pipeline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F9FAFB;
+    color: #111827;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-shell { display: flex; height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: #fff;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 20px 16px;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #111827;
+  }
+  .sidebar-logo .logo-icon {
+    width: 32px; height: 32px;
+    background: #4F46E5;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px;
+  }
+  .sidebar-nav { padding: 12px 8px; flex: 1; }
+  .nav-label {
+    font-size: 11px; font-weight: 600; color: #9CA3AF;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 8px 12px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    font-size: 14px; color: #4B5563; cursor: pointer;
+    margin-bottom: 2px; text-decoration: none;
+  }
+  .nav-item:hover { background: #F3F4F6; }
+  .nav-item.active { background: #EEF2FF; color: #4F46E5; font-weight: 600; }
+  .nav-item .icon { width: 20px; text-align: center; font-size: 16px; }
+  .sidebar-footer {
+    padding: 16px; border-top: 1px solid #E5E7EB;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #6B7280;
+  }
+  .sidebar-footer .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #4F46E5; color: #fff; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  .header {
+    height: 56px; background: #fff; border-bottom: 1px solid #E5E7EB;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; flex-shrink: 0;
+  }
+  .header-search {
+    display: flex; align-items: center; gap: 8px;
+    background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;
+    padding: 7px 12px; width: 280px; font-size: 13px; color: #9CA3AF;
+  }
+  .header-actions { display: flex; align-items: center; gap: 16px; }
+  .header-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #6B7280; font-size: 18px; cursor: pointer;
+  }
+  .header-icon:hover { background: #F3F4F6; }
+  .header-user {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: #374151;
+  }
+  .header-user .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #4F46E5; color: #fff; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+  }
+
+  /* Content */
+  .content { flex: 1; overflow-y: auto; padding: 24px 32px; }
+
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-header h1 { font-size: 22px; font-weight: 700; color: #111827; }
+  .page-header .subtitle { font-size: 14px; color: #6B7280; margin-top: 4px; }
+  .btn-ghost {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px; border: 1px solid #E5E7EB;
+    background: #fff; color: #374151; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-ghost:hover { background: #F9FAFB; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 4px; border-bottom: 1px solid #E5E7EB;
+    margin-bottom: 24px;
+  }
+  .tab {
+    padding: 10px 16px; font-size: 13px; font-weight: 500;
+    color: #6B7280; cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; display: flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { color: #374151; }
+  .tab.active { color: #4F46E5; border-bottom-color: #4F46E5; font-weight: 600; }
+
+  /* Metric Cards */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .metric-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .metric-label { font-size: 13px; color: #6B7280; margin-bottom: 2px; }
+  .metric-value { font-size: 24px; font-weight: 700; }
+
+  /* Charts area */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .chart-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .chart-title {
+    font-size: 14px; font-weight: 600; color: #111827;
+    margin-bottom: 20px;
+  }
+
+  /* Bar chart */
+  .bar-item { margin-bottom: 16px; }
+  .bar-item:last-child { margin-bottom: 0; }
+  .bar-label-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .bar-label { font-size: 13px; color: #374151; }
+  .bar-value { font-size: 13px; font-weight: 600; color: #111827; }
+  .bar-track {
+    width: 100%; height: 12px; background: #F3F4F6;
+    border-radius: 999px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 999px; }
+
+  /* Deploy overview */
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 16px 0;
+  }
+  .deploy-stat { text-align: center; }
+  .deploy-stat .value { font-size: 30px; font-weight: 700; }
+  .deploy-stat .label { font-size: 12px; color: #6B7280; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">AI</div>
+      AI Coding Pipeline
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <a class="nav-item active" href="#"><span class="icon">📊</span> Dashboard</a>
+      <a class="nav-item" href="#"><span class="icon">📋</span> Kanban Board</a>
+      <a class="nav-item" href="#"><span class="icon">🔄</span> Pipeline</a>
+      <a class="nav-item" href="#"><span class="icon">🤖</span> AI Agents</a>
+      <div class="nav-label" style="margin-top:12px;">Tools</div>
+      <a class="nav-item" href="#"><span class="icon">🔍</span> Code Review</a>
+      <a class="nav-item" href="#"><span class="icon">🛡</span> Security</a>
+      <a class="nav-item" href="#"><span class="icon">📈</span> Analytics</a>
+      <div class="nav-label" style="margin-top:12px;">Settings</div>
+      <a class="nav-item" href="#"><span class="icon">⚙️</span> Configuration</a>
+      <a class="nav-item" href="#"><span class="icon">👥</span> Team</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">SM</div>
+      <div><div style="font-weight:600;color:#111827;font-size:13px;">Sarah Miller</div><div style="font-size:12px;">Admin</div></div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main">
+    <header class="header">
+      <div class="header-search">🔍 Search tickets, agents, pipelines...</div>
+      <div class="header-actions">
+        <div class="header-icon">📶</div>
+        <div class="header-icon" style="position:relative;">🔔<span style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:2px solid #fff;"></span></div>
+        <div class="header-user">
+          <div class="avatar">SM</div>
+          Sarah
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <div class="subtitle">Pipeline metrics and analytics</div>
+        </div>
+        <button class="btn-ghost">&#x21bb; Refresh</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active">📊 Overview</div>
+        <div class="tab">📈 Pipeline</div>
+        <div class="tab">🤖 AI Costs</div>
+        <div class="tab">🛡 Code Quality</div>
+        <div class="tab">🚀 Deployments</div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#EFF6FF;">
+            <span style="font-size:22px;">📊</span>
+          </div>
+          <div>
+            <div class="metric-label">Total Tickets</div>
+            <div class="metric-value" style="color:#2563EB;">24</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#F5F3FF;">
+            <span style="font-size:22px;">🕐</span>
+          </div>
+          <div>
+            <div class="metric-label">Avg Cycle Time</div>
+            <div class="metric-value" style="color:#9333EA;">18.5h</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#EEF2FF;">
+            <span style="font-size:22px;">🤖</span>
+          </div>
+          <div>
+            <div class="metric-label">AI Cost</div>
+            <div class="metric-value" style="color:#4F46E5;">$47.82</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#FFF7ED;">
+            <span style="font-size:22px;">📈</span>
+          </div>
+          <div>
+            <div class="metric-label">Tokens Used</div>
+            <div class="metric-value" style="color:#EA580C;">1,247,830</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#F0FDF4;">
+            <span style="font-size:22px;">🚀</span>
+          </div>
+          <div>
+            <div class="metric-label">Deploy Success</div>
+            <div class="metric-value" style="color:#16A34A;">94%</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:#F0FDF4;">
+            <span style="font-size:22px;">🛡</span>
+          </div>
+          <div>
+            <div class="metric-label">Vulnerabilities</div>
+            <div class="metric-value" style="color:#16A34A;">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <!-- AI Cost by Agent -->
+        <div class="chart-card">
+          <div class="chart-title">AI Cost by Agent</div>
+          <div class="bar-item">
+            <div class="bar-label-row">
+              <span class="bar-label">Planning Agent</span>
+              <span class="bar-value">$12.45</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:65%;background:#4F46E5;"></div>
+            </div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-label-row">
+              <span class="bar-label">Coding Agent</span>
+              <span class="bar-value">$18.90</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:100%;background:#3B82F6;"></div>
+            </div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-label-row">
+              <span class="bar-label">Review Agent</span>
+              <span class="bar-value">$8.32</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:44%;background:#A855F7;"></div>
+            </div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-label-row">
+              <span class="bar-label">Security Agent</span>
+              <span class="bar-value">$5.15</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:27%;background:#F97316;"></div>
+            </div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-label-row">
+              <span class="bar-label">Test Gen Agent</span>
+              <span class="bar-value">$3.00</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:16%;background:#22C55E;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deployment Overview -->
+        <div class="chart-card">
+          <div class="chart-title">Deployment Overview</div>
+          <div class="deploy-grid">
+            <div class="deploy-stat">
+              <div class="value" style="color:#111827;">18</div>
+              <div class="label">Total Deploys</div>
+            </div>
+            <div class="deploy-stat">
+              <div class="value" style="color:#16A34A;">94%</div>
+              <div class="label">Success Rate</div>
+            </div>
+            <div class="deploy-stat">
+              <div class="value" style="color:#DC2626;">2.1%</div>
+              <div class="label">Rollback Rate</div>
+            </div>
+            <div class="deploy-stat">
+              <div class="value" style="color:#111827;">4m</div>
+              <div class="label">Avg Deploy Time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
