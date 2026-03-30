@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Detail - AI Coding Pipeline</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #F9FAFB;
+            min-height: 100vh;
+            color: #111827;
+            display: flex;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 256px;
+            min-height: 100vh;
+            background: #fff;
+            border-right: 1px solid #E5E7EB;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 20;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 20px 24px;
+        }
+
+        .sidebar-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: #4F46E5;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .sidebar-logo-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.2;
+        }
+
+        .sidebar-logo-text span {
+            display: block;
+            font-weight: 500;
+            color: #6B7280;
+            font-size: 13px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 0 12px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 8px;
+            margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+            margin-bottom: 2px;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: #F3F4F6;
+        }
+
+        .nav-item.active {
+            background: #EEF2FF;
+            color: #4F46E5;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .sidebar-footer .nav-item {
+            font-size: 13px;
+            color: #6B7280;
+        }
+
+        /* ── Header ── */
+        .header {
+            height: 64px;
+            background: #fff;
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            margin-left: 256px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .header-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 8px 14px;
+            width: 320px;
+        }
+
+        .header-search-icon {
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+
+        .header-search input {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            color: #374151;
+            outline: none;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .header-search input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .header-search kbd {
+            font-size: 11px;
+            color: #9CA3AF;
+            background: #fff;
+            border: 1px solid #E5E7EB;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: inherit;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #10B981;
+        }
+
+        .header-indicator-dot {
+            width: 8px;
+            height: 8px;
+            background: #10B981;
+            border-radius: 50%;
+        }
+
+        .header-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 18px;
+            color: #6B7280;
+        }
+
+        .header-bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            background: #EF4444;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .header-user-avatar {
+            width: 32px;
+            height: 32px;
+            background: #4F46E5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .header-user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .header-user-chevron {
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+
+        /* ── Main Content ── */
+        .main {
+            margin-left: 256px;
+            margin-top: 64px;
+            flex: 1;
+            min-height: calc(100vh - 64px);
+        }
+
+        .content-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ── Back link ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: #6B7280;
+            text-decoration: none;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            color: #374151;
+        }
+
+        /* ── Main Card ── */
+        .ticket-card {
+            background: #fff;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        /* Card Header */
+        .ticket-header {
+            padding: 24px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .ticket-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #F59E0B;
+            flex-shrink: 0;
+        }
+
+        .badge-project {
+            background: #4F46E5;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        .badge-priority {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #FFF7ED;
+            color: #C2410C;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 6px;
+            border: 1px solid #FDBA74;
+        }
+
+        .badge-priority-dot {
+            width: 6px;
+            height: 6px;
+            background: #F59E0B;
+            border-radius: 50%;
+        }
+
+        .points-text {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-left: 4px;
+        }
+
+        .ticket-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 14px;
+            line-height: 1.3;
+        }
+
+        .ticket-info-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .ticket-assignee {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .avatar-indigo { background: #4F46E5; }
+        .avatar-green { background: #10B981; }
+        .avatar-purple { background: #8B5CF6; }
+
+        .info-separator {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #D1D5DB;
+        }
+
+        .ticket-labels {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .label-pill {
+            background: #F3F4F6;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        /* Description */
+        .ticket-description {
+            padding: 24px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .section-heading {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .description-text {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+
+        .description-text ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .description-text li {
+            margin-bottom: 4px;
+        }
+
+        /* Tabs */
+        .tabs-bar {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 0 24px;
+            overflow-x: auto;
+        }
+
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6B7280;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .tab-item:hover {
+            color: #374151;
+        }
+
+        .tab-item.active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+            font-weight: 600;
+        }
+
+        .tab-count {
+            background: #E5E7EB;
+            color: #6B7280;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 10px;
+        }
+
+        .tab-item.active .tab-count {
+            background: #EEF2FF;
+            color: #4F46E5;
+        }
+
+        /* Comments */
+        .comments-section {
+            padding: 24px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .comment:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .comment-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+
+        .comment-author {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .comment-role {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .role-pm {
+            background: #EEF2FF;
+            color: #4F46E5;
+        }
+
+        .role-ai {
+            background: #ECFDF5;
+            color: #059669;
+        }
+
+        .role-dev {
+            background: #EFF6FF;
+            color: #2563EB;
+        }
+
+        .comment-time {
+            font-size: 13px;
+            color: #9CA3AF;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.65;
+            white-space: pre-line;
+        }
+
+        /* Comment Input */
+        .comment-input-area {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            min-height: 96px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #374151;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .comment-textarea::placeholder {
+            color: #9CA3AF;
+        }
+
+        .comment-textarea:focus {
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .comment-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 9px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">AI</div>
+        <div class="sidebar-logo-text">AI Coding<span>Pipeline</span></div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Main</div>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x1F4CA;</span> Dashboard</a>
+        <a class="nav-item active" href="#"><span class="nav-icon">&#x25A6;</span> Board</a>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x1F4CB;</span> Backlog</a>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x23F1;</span> Sprints</a>
+        <div style="margin-top: 20px;"></div>
+        <div class="nav-label">Tools</div>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x1F916;</span> AI Agents</a>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x1F4E6;</span> Deployments</a>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x1F4CA;</span> Reports</a>
+    </nav>
+    <div class="sidebar-footer">
+        <a class="nav-item" href="#"><span class="nav-icon">&#x2139;</span> About</a>
+        <a class="nav-item" href="#"><span class="nav-icon">&#x2699;</span> Settings</a>
+    </div>
+</aside>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-search">
+        <span class="header-search-icon">&#x1F50D;</span>
+        <input type="text" placeholder="Search tickets, projects...">
+        <kbd>&#x2318;K</kbd>
+    </div>
+    <div class="header-right">
+        <div class="header-indicator">
+            <span class="header-indicator-dot"></span>
+            Online
+        </div>
+        <div class="header-bell">
+            &#x1F514;
+            <span class="header-bell-badge">3</span>
+        </div>
+        <div class="header-user">
+            <div class="header-user-avatar">AK</div>
+            <span class="header-user-name">Alex Kim</span>
+            <span class="header-user-chevron">&#x25BE;</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="main">
+    <div class="content-wrapper">
+
+        <!-- Back link -->
+        <a class="back-link" href="#">&#x2190; Back to Board</a>
+
+        <!-- Ticket Card -->
+        <div class="ticket-card">
+
+            <!-- Header Section -->
+            <div class="ticket-header">
+                <div class="ticket-meta-row">
+                    <span class="status-dot"></span>
+                    <span class="badge-project">AI Coding</span>
+                    <span class="badge-priority"><span class="badge-priority-dot"></span> P1 - High</span>
+                    <span class="points-text">5 pts</span>
+                </div>
+                <h1 class="ticket-title">Implement user authentication middleware</h1>
+                <div class="ticket-info-row">
+                    <div class="ticket-assignee">
+                        <span class="avatar-sm avatar-indigo">AK</span>
+                        <span>Alex Kim</span>
+                    </div>
+                    <span class="info-separator"></span>
+                    <span>Created Mar 25, 2026</span>
+                    <span class="info-separator"></span>
+                    <span>Updated 45 minutes ago</span>
+                </div>
+                <div class="ticket-labels">
+                    <span class="label-pill">backend</span>
+                    <span class="label-pill">security</span>
+                    <span class="label-pill">auth</span>
+                </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="ticket-description">
+                <h2 class="section-heading">Description</h2>
+                <div class="description-text">Implement JWT-based authentication middleware for the FastAPI backend. The middleware should:
+
+<ul>
+<li>Validate access tokens on each request</li>
+<li>Extract user information from the token payload</li>
+<li>Support role-based access control (RBAC) with roles: owner, pm_lead, developer, viewer</li>
+<li>Handle token expiration gracefully with proper error responses</li>
+<li>Integrate with the existing auth service for token refresh</li>
+</ul></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-bar">
+                <div class="tab-item active">&#x1F4AC; Comments</div>
+                <div class="tab-item">&#x1F4CE; Attachments <span class="tab-count">2</span></div>
+                <div class="tab-item">&#x1F4CB; Plan</div>
+                <div class="tab-item">&#x1F4BB; Code</div>
+                <div class="tab-item">&#x1F9EA; Tests</div>
+                <div class="tab-item">&#x1F916; AI Logs</div>
+                <div class="tab-item">&#x1F4DC; History</div>
+            </div>
+
+            <!-- Comments Content -->
+            <div class="comments-section">
+
+                <!-- Comment 1 -->
+                <div class="comment">
+                    <div class="comment-avatar avatar-indigo">AK</div>
+                    <div class="comment-body">
+                        <div class="comment-header">
+                            <span class="comment-author">Alex Kim</span>
+                            <span class="comment-role role-pm">PM Lead</span>
+                            <span class="comment-time">2 hours ago</span>
+                        </div>
+                        <div class="comment-text">I've started the AI planning phase for this ticket. The planning agent will decompose the implementation into subtasks based on the description above.</div>
+                    </div>
+                </div>
+
+                <!-- Comment 2 -->
+                <div class="comment">
+                    <div class="comment-avatar avatar-green" style="font-size: 18px;">&#x1F916;</div>
+                    <div class="comment-body">
+                        <div class="comment-header">
+                            <span class="comment-author">Planning Agent</span>
+                            <span class="comment-role role-ai">AI Agent</span>
+                            <span class="comment-time">1 hour ago</span>
+                        </div>
+                        <div class="comment-text">Plan generated successfully. The implementation has been broken down into 4 subtasks:
+1. Create JWT token validation middleware
+2. Implement RBAC decorator for endpoint protection
+3. Add token refresh endpoint logic
+4. Write unit tests for auth middleware
+
+Estimated complexity: Medium
+Files to modify: auth_middleware.py, auth_service.py, dependencies.py</div>
+                    </div>
+                </div>
+
+                <!-- Comment 3 -->
+                <div class="comment">
+                    <div class="comment-avatar avatar-purple">MR</div>
+                    <div class="comment-body">
+                        <div class="comment-header">
+                            <span class="comment-author">Maria Rodriguez</span>
+                            <span class="comment-role role-dev">Developer</span>
+                            <span class="comment-time">45 minutes ago</span>
+                        </div>
+                        <div class="comment-text">The plan looks comprehensive. I'd suggest also adding rate limiting to the auth endpoints to prevent brute force attacks. Should we include that in scope?</div>
+                    </div>
+                </div>
+
+                <!-- Comment Input -->
+                <div class="comment-input-area">
+                    <textarea class="comment-textarea" placeholder="Add a comment..."></textarea>
+                    <div class="comment-actions">
+                        <button class="btn-primary">Post Comment</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

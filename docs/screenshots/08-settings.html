@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - AI Coding Pipeline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F9FAFB;
+    color: #111827;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 256px;
+    background: #fff;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 20;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .sidebar-logo h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4F46E5;
+    line-height: 1.3;
+  }
+  .sidebar-logo span {
+    color: #6B7280;
+    font-weight: 400;
+  }
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4B5563;
+    text-decoration: none;
+    margin-bottom: 2px;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: #F3F4F6; }
+  .nav-item.active {
+    background: #EEF2FF;
+    color: #4F46E5;
+    font-weight: 600;
+  }
+  .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid #E5E7EB;
+  }
+
+  /* Header */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 256px;
+    right: 0;
+    height: 64px;
+    background: #fff;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 10;
+  }
+  .header-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 8px 12px;
+    width: 280px;
+  }
+  .header-search input {
+    border: none;
+    background: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: #6B7280;
+    width: 100%;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .header-icon:hover { background: #F3F4F6; }
+  .wifi-dot {
+    width: 8px;
+    height: 8px;
+    background: #22C55E;
+    border-radius: 50%;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+  .badge-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #EF4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+  .user-profile:hover { background: #F3F4F6; }
+  .user-avatar-header {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #4F46E5;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .user-profile-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  /* Main Content */
+  .main {
+    margin-left: 256px;
+    margin-top: 64px;
+    padding: 32px 24px;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+  .main-inner {
+    max-width: 896px;
+    width: 100%;
+  }
+  .main-inner > h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 24px;
+  }
+
+  /* Two-column layout */
+  .settings-layout {
+    display: flex;
+    gap: 24px;
+  }
+
+  /* Settings sidebar */
+  .settings-sidebar {
+    width: 192px;
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4B5563;
+    cursor: pointer;
+    text-align: left;
+    margin-bottom: 2px;
+  }
+  .tab-btn:hover { background: #F3F4F6; }
+  .tab-btn.active {
+    background: #EEF2FF;
+    color: #4338CA;
+    font-weight: 600;
+  }
+
+  /* Content panel */
+  .content-panel {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    padding: 24px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+  .content-panel h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+  }
+  .content-panel > .subtitle {
+    font-size: 14px;
+    color: #6B7280;
+    margin-top: 4px;
+  }
+
+  /* Accordion */
+  .accordion {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .accordion-item {
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #fff;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .accordion-header:hover { background: #F9FAFB; }
+  .accordion-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22C55E;
+    flex-shrink: 0;
+  }
+  .accordion-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+  }
+  .accordion-desc {
+    font-size: 12px;
+    color: #6B7280;
+    margin-left: 8px;
+  }
+  .accordion-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .model-tag {
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #9CA3AF;
+  }
+  .chevron {
+    font-size: 12px;
+    color: #9CA3AF;
+    transition: transform 0.2s;
+  }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* Accordion body */
+  .accordion-body {
+    border-top: 1px solid #E5E7EB;
+    padding: 16px;
+    background: rgba(249,250,251,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Form elements */
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .checkbox-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4F46E5;
+  }
+  .checkbox-row label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+  .form-group select,
+  .form-group input[type="text"],
+  .form-group input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+    outline: none;
+  }
+  .form-group select:focus,
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+  }
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 12px;
+    color: #111827;
+    background: #fff;
+    outline: none;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  .form-note {
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-top: 4px;
+  }
+
+  .params-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .params-grid .form-group input {
+    width: 100%;
+  }
+
+  /* Save button */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #4F46E5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #4338CA; }
+  .save-row {
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>AI Coding<br><span>Pipeline</span></h1>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="#">
+      <span class="icon">📋</span> Board
+    </a>
+    <a class="nav-item" href="#">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <span class="icon">👥</span> Users
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="nav-item" href="#">
+      <span class="icon">ℹ️</span> About
+    </a>
+    <a class="nav-item active" href="#">
+      <span class="icon">⚙️</span> Settings
+    </a>
+  </div>
+</aside>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-search">
+    <span style="color:#9CA3AF;font-size:16px;">🔍</span>
+    <input type="text" placeholder="Search...">
+  </div>
+  <div class="header-right">
+    <div class="header-icon">
+      📶
+      <span class="wifi-dot"></span>
+    </div>
+    <div class="header-icon">
+      🔔
+      <span class="badge-count">3</span>
+    </div>
+    <div class="user-profile">
+      <div class="user-avatar-header">AK</div>
+      <span class="user-profile-name">Alex Kim</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main">
+  <div class="main-inner">
+    <h1>Settings</h1>
+
+    <div class="settings-layout">
+      <!-- Settings sidebar tabs -->
+      <div class="settings-sidebar">
+        <button class="tab-btn">📁 Project</button>
+        <button class="tab-btn active">🤖 AI Agents</button>
+        <button class="tab-btn">🔑 Integrations</button>
+        <button class="tab-btn">🔔 Notifications</button>
+        <button class="tab-btn">🌐 Profile</button>
+      </div>
+
+      <!-- Content panel -->
+      <div class="content-panel">
+        <h2>AI Agent Configuration</h2>
+        <p class="subtitle">Configure AI models, prompts, and limits for each pipeline stage</p>
+
+        <div class="accordion">
+          <!-- Item 1: AI Planning (EXPANDED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">AI Planning</span>
+                <span class="accordion-desc">Agent generates a development plan from the ticket description</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron open">&#9660;</span>
+              </div>
+            </button>
+            <div class="accordion-body">
+              <div class="checkbox-row">
+                <input type="checkbox" id="enable-planning" checked>
+                <label for="enable-planning">Enable this stage</label>
+              </div>
+
+              <div class="form-group">
+                <label>AI Model</label>
+                <select>
+                  <option>Claude Sonnet 4</option>
+                  <option>Claude Opus 4</option>
+                  <option>GPT-4o</option>
+                  <option>GPT-4o Mini</option>
+                  <option>Gemini 2.5 Pro</option>
+                  <option>Gemini 2.5 Flash</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>System Prompt</label>
+                <textarea rows="8">You are an AI planning agent. Given a ticket with title and description, create a detailed development plan.
+
+Include:
+- List of files to create/modify
+- Step-by-step implementation plan
+- Estimated complexity
+- Potential risks and mitigations
+- Test strategy</textarea>
+                <p class="form-note">This prompt is sent as the system message to the AI model</p>
+              </div>
+
+              <div class="params-grid">
+                <div class="form-group">
+                  <label>Temperature</label>
+                  <input type="number" value="0.3" step="0.1" min="0" max="2">
+                </div>
+                <div class="form-group">
+                  <label>Max Tokens</label>
+                  <input type="number" value="4096">
+                </div>
+                <div class="form-group">
+                  <label>Timeout (seconds)</label>
+                  <input type="number" value="120">
+                </div>
+                <div class="form-group">
+                  <label>Cost Cap (USD)</label>
+                  <input type="number" value="0.50" step="0.01">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: AI Coding (COLLAPSED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">AI Coding</span>
+                <span class="accordion-desc">Agent generates code based on the approved plan</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron">&#9654;</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Item 3: AI Testing (COLLAPSED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">AI Testing</span>
+                <span class="accordion-desc">Agent generates and runs tests...</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron">&#9654;</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Item 4: AI Security Review (COLLAPSED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">AI Security Review</span>
+                <span class="accordion-desc">Agent scans code for security vulnerabilities</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron">&#9654;</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Item 5: AI Code Review (COLLAPSED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">AI Code Review</span>
+                <span class="accordion-desc">Agent performs automated code review</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron">&#9654;</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Item 6: Staging Deploy (COLLAPSED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">Staging Deploy</span>
+                <span class="accordion-desc">Instructions for deploying to staging...</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron">&#9654;</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Item 7: Staging Verification (COLLAPSED) -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <div class="accordion-header-left">
+                <span class="status-dot"></span>
+                <span class="accordion-title">Staging Verification</span>
+                <span class="accordion-desc">Agent verifies staging deployment quality...</span>
+              </div>
+              <div class="accordion-header-right">
+                <span class="model-tag">claude-sonnet</span>
+                <span class="chevron">&#9654;</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <button class="btn-primary">💾 Save AI Configuration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
