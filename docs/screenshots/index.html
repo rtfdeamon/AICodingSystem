@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Coding Pipeline — Interface Screenshots</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #F9FAFB;
+    background: #FFFFFF;
     color: #111827;
     min-height: 100vh;
   }
@@ -17,7 +17,9 @@
     margin: 0 auto;
     padding: 48px 24px;
   }
-  .header {
+
+  /* Header */
+  .page-header {
     display: flex;
     align-items: center;
     gap: 16px;
@@ -31,243 +33,497 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
   }
-  h1 { font-size: 28px; font-weight: 700; color: #111827; }
-  .subtitle { font-size: 16px; color: #6B7280; margin-bottom: 32px; }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+  }
+  .subtitle {
+    font-size: 16px;
+    color: #6B7280;
+    margin-left: 64px;
+    margin-bottom: 0;
+  }
+
+  /* Grid */
   .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+    margin-top: 32px;
   }
-  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Card */
   .card {
-    background: white;
-    border-radius: 12px;
+    background: #FFFFFF;
     border: 1px solid #E5E7EB;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    border-radius: 16px;
     overflow: hidden;
     cursor: pointer;
-    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
     text-decoration: none;
     color: inherit;
     display: block;
   }
   .card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     transform: translateY(-2px);
   }
-  .preview {
+  .card-preview {
     height: 160px;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
     overflow: hidden;
   }
-  .card-body { padding: 16px; }
-  .card-num { font-size: 12px; color: #9CA3AF; margin-bottom: 4px; }
-  .card-title { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 4px; }
-  .card-desc { font-size: 12px; color: #6B7280; line-height: 1.5; }
+  .card-body {
+    padding: 16px;
+    border-top: 1px solid #F3F4F6;
+  }
+  .card-number {
+    font-size: 12px;
+    color: #9CA3AF;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .card-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+  .card-desc {
+    font-size: 12px;
+    color: #6B7280;
+    line-height: 1.5;
+  }
 
-  /* Preview styles for each screen */
-  .p-login { background: #F9FAFB; }
-  .p-login .mock-card { width: 120px; height: 80px; background: white; border-radius: 8px; border: 2px solid #4F46E5; }
-  .p-login .mock-btn { width: 80px; height: 8px; background: #4F46E5; border-radius: 4px; margin-top: 8px; }
+  /* Preview: Login */
+  .preview-login { background: #F9FAFB; }
+  .preview-login .shape {
+    width: 120px;
+    height: 84px;
+    border: 2px solid #4F46E5;
+    border-radius: 12px;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .preview-login .shape .dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: #4F46E5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .preview-login .shape .lines {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+  }
+  .preview-login .shape .lines span {
+    display: block;
+    height: 5px;
+    background: #E5E7EB;
+    border-radius: 3px;
+  }
 
-  .p-register { background: #F9FAFB; }
-  .p-register .mock-card { width: 120px; height: 90px; background: white; border-radius: 8px; border: 2px solid #4F46E5; }
+  /* Preview: Register */
+  .preview-register { background: #F9FAFB; }
+  .preview-register .shape {
+    width: 120px;
+    height: 94px;
+    border: 2px solid #4F46E5;
+    border-radius: 12px;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .preview-register .shape .lines {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+  }
+  .preview-register .shape .lines span {
+    display: block;
+    height: 5px;
+    background: #E5E7EB;
+    border-radius: 3px;
+  }
 
-  .p-kanban { background: #F3F4F6; flex-direction: column; gap: 4px; }
-  .p-kanban .cols { display: flex; gap: 4px; padding: 0 12px; }
-  .p-kanban .col { width: 24px; border-radius: 3px; }
+  /* Preview: Kanban */
+  .preview-kanban {
+    background: #F3F4F6;
+    gap: 6px;
+  }
+  .preview-kanban .col {
+    width: 10px;
+    border-radius: 3px;
+  }
 
-  .p-ticket { background: #FFFFFF; border-bottom: 3px solid #F3F4F6; }
-  .p-ticket .mock-tabs { display: flex; gap: 8px; }
-  .p-ticket .mock-tab { width: 32px; height: 4px; background: #E5E7EB; border-radius: 2px; }
-  .p-ticket .mock-tab.active { background: #4F46E5; }
+  /* Preview: Ticket */
+  .preview-ticket {
+    background: #FFFFFF;
+    flex-direction: column;
+    gap: 0;
+  }
+  .preview-ticket .tab-bar {
+    display: flex;
+    gap: 0;
+    width: 80%;
+    border-bottom: 2px solid #E5E7EB;
+  }
+  .preview-ticket .tab-bar span {
+    flex: 1;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #9CA3AF;
+    font-weight: 500;
+  }
+  .preview-ticket .tab-bar span.active {
+    color: #4F46E5;
+    border-bottom: 2px solid #4F46E5;
+    font-weight: 600;
+  }
+  .preview-ticket .content-lines {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    width: 70%;
+  }
+  .preview-ticket .content-lines span {
+    height: 4px;
+    background: #F3F4F6;
+    border-radius: 2px;
+  }
 
-  .p-modal { background: rgba(0,0,0,0.4); }
-  .p-modal .mock-modal { width: 140px; height: 90px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  /* Preview: Create Ticket */
+  .preview-create { background: rgba(0,0,0,0.4); }
+  .preview-create .modal {
+    width: 130px;
+    height: 90px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .preview-create .modal span {
+    display: block;
+    height: 5px;
+    background: #E5E7EB;
+    border-radius: 3px;
+  }
 
-  .p-dashboard { background: #F3F4F6; }
-  .p-dashboard .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px; }
-  .p-dashboard .metric { background: white; border-radius: 4px; height: 24px; border: 1px solid #E5E7EB; }
+  /* Preview: Dashboard */
+  .preview-dashboard {
+    background: #F3F4F6;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 20px 30px;
+  }
+  .preview-dashboard .metric {
+    width: 44px;
+    height: 32px;
+    background: #FFFFFF;
+    border-radius: 6px;
+    border: 1px solid #E5E7EB;
+  }
 
-  .p-users { background: #FFFFFF; }
-  .p-users .mock-row { width: 200px; height: 6px; background: #E5E7EB; border-radius: 2px; margin: 6px 0; }
-  .p-users .mock-row:first-child { background: #F3F4F6; height: 8px; }
+  /* Preview: Users */
+  .preview-users {
+    background: #FFFFFF;
+    flex-direction: column;
+    gap: 0;
+    padding: 20px 24px;
+  }
+  .preview-users .table-line {
+    width: 100%;
+    height: 1px;
+    background: #E5E7EB;
+    margin: 8px 0;
+  }
+  .preview-users .table-row {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .preview-users .table-row span {
+    height: 4px;
+    background: #F3F4F6;
+    border-radius: 2px;
+    flex: 1;
+  }
+  .preview-users .table-row span:first-child { flex: 0.5; }
 
-  .p-settings { background: #FFFFFF; display: flex; gap: 8px; padding: 16px; }
-  .p-settings .mock-sidebar { width: 40px; display: flex; flex-direction: column; gap: 4px; }
-  .p-settings .mock-sidebar div { height: 8px; background: #E5E7EB; border-radius: 3px; }
-  .p-settings .mock-sidebar div.active { background: #EEF2FF; }
-  .p-settings .mock-form { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-  .p-settings .mock-form div { height: 6px; background: #F3F4F6; border-radius: 2px; }
+  /* Preview: Settings */
+  .preview-settings {
+    background: #FFFFFF;
+    gap: 0;
+    align-items: stretch;
+  }
+  .preview-settings .settings-side {
+    width: 50px;
+    background: #F9FAFB;
+    border-right: 1px solid #E5E7EB;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 8px;
+  }
+  .preview-settings .settings-side span {
+    height: 4px;
+    background: #E5E7EB;
+    border-radius: 2px;
+  }
+  .preview-settings .settings-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 20px;
+    justify-content: center;
+  }
+  .preview-settings .settings-form span {
+    height: 4px;
+    background: #F3F4F6;
+    border-radius: 2px;
+  }
 
-  .p-about { background: #FFFFFF; flex-direction: column; gap: 8px; }
-  .p-about .mock-logo { width: 36px; height: 36px; background: #4F46E5; border-radius: 8px; }
-  .p-about .mock-block { width: 160px; height: 20px; background: #F9FAFB; border-radius: 4px; border: 1px solid #E5E7EB; }
+  /* Preview: About */
+  .preview-about {
+    background: #FFFFFF;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .preview-about .about-shape {
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .page-header h1 { font-size: 22px; }
+    .subtitle { margin-left: 0; }
+  }
 </style>
 </head>
 <body>
+
 <div class="container">
-  <div class="header">
+  <div class="page-header">
     <div class="logo">AI</div>
-    <h1>AI Coding Pipeline — Interface Screenshots</h1>
+    <h1>AI Coding Pipeline &mdash; Interface Screenshots</h1>
   </div>
   <p class="subtitle">Click any screen to view the full mockup</p>
 
   <div class="grid">
 
+    <!-- 01 Login -->
     <a class="card" href="01-login.html">
-      <div class="preview p-login" style="flex-direction:column;align-items:center;">
-        <div class="mock-card"></div>
-        <div class="mock-btn"></div>
+      <div class="card-preview preview-login">
+        <div class="shape">
+          <div class="dot">AI</div>
+          <div class="lines">
+            <span style="width:60px;"></span>
+            <span style="width:60px;"></span>
+          </div>
+        </div>
       </div>
       <div class="card-body">
-        <div class="card-num">01</div>
-        <div class="card-title">Login Page</div>
-        <div class="card-desc">Authentication screen with email/password and GitHub OAuth</div>
+        <div class="card-number">01</div>
+        <div class="card-name">Login Page</div>
+        <div class="card-desc">Authentication screen with email and password fields</div>
       </div>
     </a>
 
+    <!-- 02 Register -->
     <a class="card" href="02-register.html">
-      <div class="preview p-register" style="flex-direction:column;align-items:center;">
-        <div class="mock-card"></div>
+      <div class="card-preview preview-register">
+        <div class="shape">
+          <div class="lines">
+            <span style="width:70px;"></span>
+            <span style="width:70px;"></span>
+            <span style="width:70px;"></span>
+            <span style="width:50px;background:#4F46E5;height:6px;border-radius:3px;"></span>
+          </div>
+        </div>
       </div>
       <div class="card-body">
-        <div class="card-num">02</div>
-        <div class="card-title">Register Page</div>
-        <div class="card-desc">New account creation with name, email, and password</div>
+        <div class="card-number">02</div>
+        <div class="card-name">Register Page</div>
+        <div class="card-desc">New user registration with name, email, and password</div>
       </div>
     </a>
 
+    <!-- 03 Kanban Board -->
     <a class="card" href="03-kanban-board.html">
-      <div class="preview p-kanban">
-        <div style="font-size:10px;color:#6B7280;margin-bottom:4px;">Board</div>
-        <div class="cols">
-          <div class="col" style="height:60px;background:#6B7280;"></div>
-          <div class="col" style="height:45px;background:#3B82F6;"></div>
-          <div class="col" style="height:30px;background:#8B5CF6;"></div>
-          <div class="col" style="height:50px;background:#F59E0B;"></div>
-          <div class="col" style="height:25px;background:#EC4899;"></div>
-          <div class="col" style="height:20px;background:#10B981;"></div>
-          <div class="col" style="height:10px;background:#EF4444;"></div>
-          <div class="col" style="height:40px;background:#22C55E;"></div>
-        </div>
+      <div class="card-preview preview-kanban">
+        <div class="col" style="height:70px;background:#4F46E5;"></div>
+        <div class="col" style="height:90px;background:#F59E0B;"></div>
+        <div class="col" style="height:55px;background:#3B82F6;"></div>
+        <div class="col" style="height:80px;background:#8B5CF6;"></div>
+        <div class="col" style="height:40px;background:#EC4899;"></div>
+        <div class="col" style="height:65px;background:#10B981;"></div>
+        <div class="col" style="height:45px;background:#6366F1;"></div>
+        <div class="col" style="height:75px;background:#EF4444;"></div>
       </div>
       <div class="card-body">
-        <div class="card-num">03</div>
-        <div class="card-title">Kanban Board</div>
-        <div class="card-desc">8-column pipeline board with drag-and-drop ticket management</div>
+        <div class="card-number">03</div>
+        <div class="card-name">Kanban Board</div>
+        <div class="card-desc">Drag-and-drop task board with status columns and AI agent labels</div>
       </div>
     </a>
 
+    <!-- 04 Ticket Detail -->
     <a class="card" href="04-ticket-detail.html">
-      <div class="preview p-ticket" style="flex-direction:column;gap:12px;">
-        <div style="font-size:11px;font-weight:600;color:#374151;">Ticket Detail</div>
-        <div class="mock-tabs">
-          <div class="mock-tab active"></div>
-          <div class="mock-tab"></div>
-          <div class="mock-tab"></div>
-          <div class="mock-tab"></div>
-          <div class="mock-tab"></div>
-          <div class="mock-tab"></div>
-          <div class="mock-tab"></div>
+      <div class="card-preview preview-ticket">
+        <div class="tab-bar">
+          <span class="active">Details</span>
+          <span>Activity</span>
+          <span>AI Logs</span>
+        </div>
+        <div class="content-lines">
+          <span style="width:90%;"></span>
+          <span style="width:70%;"></span>
+          <span style="width:80%;"></span>
+          <span style="width:60%;"></span>
         </div>
       </div>
       <div class="card-body">
-        <div class="card-num">04</div>
-        <div class="card-title">Ticket Detail</div>
-        <div class="card-desc">Multi-tab ticket view with comments, plan, code, tests, AI logs</div>
+        <div class="card-number">04</div>
+        <div class="card-name">Ticket Detail</div>
+        <div class="card-desc">Full ticket view with tabs for details, activity, and AI processing logs</div>
       </div>
     </a>
 
+    <!-- 05 Create Ticket -->
     <a class="card" href="05-create-ticket-modal.html">
-      <div class="preview p-modal">
-        <div class="mock-modal"></div>
+      <div class="card-preview preview-create">
+        <div class="modal">
+          <span style="width:80px;"></span>
+          <span style="width:90px;"></span>
+          <span style="width:60px;"></span>
+          <span style="width:50px;background:#4F46E5;height:6px;border-radius:3px;"></span>
+        </div>
       </div>
       <div class="card-body">
-        <div class="card-num">05</div>
-        <div class="card-title">Create Ticket</div>
-        <div class="card-desc">Modal form for creating new tickets with priority and labels</div>
+        <div class="card-number">05</div>
+        <div class="card-name">Create Ticket</div>
+        <div class="card-desc">Modal dialog for creating new tickets with priority and assignee</div>
       </div>
     </a>
 
+    <!-- 06 Dashboard -->
     <a class="card" href="06-dashboard.html">
-      <div class="preview p-dashboard">
-        <div class="metrics">
-          <div class="metric"></div>
-          <div class="metric"></div>
-          <div class="metric"></div>
-          <div class="metric"></div>
-          <div class="metric"></div>
-          <div class="metric"></div>
-        </div>
+      <div class="card-preview preview-dashboard">
+        <div class="metric"></div>
+        <div class="metric"></div>
+        <div class="metric"></div>
+        <div class="metric"></div>
+        <div class="metric"></div>
+        <div class="metric"></div>
       </div>
       <div class="card-body">
-        <div class="card-num">06</div>
-        <div class="card-title">Metrics Dashboard</div>
-        <div class="card-desc">Pipeline metrics, AI costs, code quality, and deployment stats</div>
+        <div class="card-number">06</div>
+        <div class="card-name">Metrics Dashboard</div>
+        <div class="card-desc">Overview of project metrics, AI costs, and task completion statistics</div>
       </div>
     </a>
 
+    <!-- 07 User Management -->
     <a class="card" href="07-user-management.html">
-      <div class="preview p-users" style="flex-direction:column;padding:16px 24px;">
-        <div class="mock-row"></div>
-        <div class="mock-row"></div>
-        <div class="mock-row"></div>
-        <div class="mock-row"></div>
-        <div class="mock-row"></div>
+      <div class="card-preview preview-users">
+        <div class="table-row"><span></span><span></span><span></span><span></span></div>
+        <div class="table-line"></div>
+        <div class="table-row"><span></span><span></span><span></span><span></span></div>
+        <div class="table-line"></div>
+        <div class="table-row"><span></span><span></span><span></span><span></span></div>
+        <div class="table-line"></div>
+        <div class="table-row"><span></span><span></span><span></span><span></span></div>
+        <div class="table-line"></div>
+        <div class="table-row"><span></span><span></span><span></span><span></span></div>
       </div>
       <div class="card-body">
-        <div class="card-num">07</div>
-        <div class="card-title">User Management</div>
-        <div class="card-desc">Admin panel for managing team members and role assignments</div>
+        <div class="card-number">07</div>
+        <div class="card-name">User Management</div>
+        <div class="card-desc">Admin panel for managing users, roles, and permissions</div>
       </div>
     </a>
 
+    <!-- 08 Settings -->
     <a class="card" href="08-settings.html">
-      <div class="preview p-settings">
-        <div class="mock-sidebar">
-          <div></div>
-          <div class="active"></div>
-          <div></div>
-          <div></div>
-          <div></div>
+      <div class="card-preview preview-settings">
+        <div class="settings-side">
+          <span style="width:30px;"></span>
+          <span style="width:25px;"></span>
+          <span style="width:28px;"></span>
+          <span style="width:22px;"></span>
         </div>
-        <div class="mock-form">
-          <div style="width:60%;"></div>
-          <div style="width:100%;height:24px;"></div>
-          <div style="width:80%;"></div>
-          <div style="width:50%;"></div>
+        <div class="settings-form">
+          <span style="width:60%;"></span>
+          <span style="width:90%;height:6px;"></span>
+          <span style="width:60%;margin-top:8px;"></span>
+          <span style="width:90%;height:6px;"></span>
+          <span style="width:40%;margin-top:8px;background:#4F46E5;height:6px;border-radius:3px;"></span>
         </div>
       </div>
       <div class="card-body">
-        <div class="card-num">08</div>
-        <div class="card-title">Settings</div>
-        <div class="card-desc">Project configuration, AI agent models, prompts, and integrations</div>
+        <div class="card-number">08</div>
+        <div class="card-name">Settings</div>
+        <div class="card-desc">Application settings for AI models, notifications, and integrations</div>
       </div>
     </a>
 
+    <!-- 09 About -->
     <a class="card" href="09-about.html">
-      <div class="preview p-about">
-        <div class="mock-logo"></div>
-        <div class="mock-block"></div>
-        <div class="mock-block" style="width:120px;"></div>
+      <div class="card-preview preview-about">
+        <div class="about-shape" style="width:100px;height:24px;"></div>
+        <div class="about-shape" style="width:130px;height:36px;"></div>
+        <div class="about-shape" style="width:130px;height:36px;"></div>
       </div>
       <div class="card-body">
-        <div class="card-num">09</div>
-        <div class="card-title">About</div>
-        <div class="card-desc">System information, developer contacts, and tech stack overview</div>
+        <div class="card-number">09</div>
+        <div class="card-name">About</div>
+        <div class="card-desc">System information, developer details, and technology stack</div>
       </div>
     </a>
 
   </div>
 </div>
+
 </body>
 </html>
