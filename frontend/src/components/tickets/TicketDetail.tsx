@@ -186,12 +186,48 @@ export function TicketDetail() {
           )}
         </div>
 
-        {/* Description */}
-        <div className="border-b border-gray-200 p-6">
-          <h3 className="mb-2 text-sm font-semibold text-gray-700">Description</h3>
-          <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
-            {ticket.description}
-          </p>
+        {/* Description & Modules */}
+        <div className="border-b border-gray-200 p-6 space-y-6">
+          {ticket.description && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Description</h3>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                {ticket.description}
+              </p>
+            </div>
+          )}
+          {ticket.business_task && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Общая бизнес задача</h3>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                {ticket.business_task}
+              </p>
+            </div>
+          )}
+          {ticket.decomposed_task && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Декомпозированная задача</h3>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                {ticket.decomposed_task}
+              </p>
+            </div>
+          )}
+          {ticket.coding_task && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Задача на кодирование</h3>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                {ticket.coding_task}
+              </p>
+            </div>
+          )}
+          {ticket.ai_prompt && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">ИИ промпт</h3>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed italic border-l-2 border-brand-300 pl-3">
+                {ticket.ai_prompt}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}

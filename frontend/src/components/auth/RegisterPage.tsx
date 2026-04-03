@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { useTodoAssistantStore } from '@/stores/todoAssistantStore';
 
 export function RegisterPage() {
   const [name, setName] = useState('');
@@ -30,8 +31,26 @@ export function RegisterPage() {
     try {
       await register(email, password, name);
       navigate('/board');
-    } catch {
-      // Error is set in store
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const data = (err as { response?: { data?: { detail?: string; message?: string } } })?.response?.data;
+      const detail = data?.detail || data?.message || 'Registration failed';
+      // Don't add TODO for user-level errors like "email already exists"
+      if (status === 409 || detail.toLowerCase().includes('already exists')) {
+        // Store already shows the error — no need for TODO
+      } else {
+        useTodoAssistantStore.getState().addTodo({
+          severity: status ? 'warning' : 'critical',
+          source: 'auto:api',
+          title: 'Регистрация не работает',
+          detail: status
+            ? `HTTP ${status}: ${detail}. Проверьте backend /auth/register.`
+            : `Сетевая ошибка — backend недоступен. Запустите backend сервер.`,
+          identifier: 'auth:register-fail',
+          checkKey: 'auth:register',
+        });
+        useTodoAssistantStore.getState().open();
+      }
     }
   };
 

@@ -14,6 +14,10 @@ class TicketCreate(BaseModel):
     title: str = Field(min_length=1, max_length=512)
     description: str | None = None
     acceptance_criteria: str | None = None
+    business_task: str | None = None
+    decomposed_task: str | None = None
+    coding_task: str | None = None
+    ai_prompt: str | None = None
     priority: str = Field(default="P2", pattern=r"^P[0-3]$")
     labels: list[str] | None = None
 
@@ -24,6 +28,10 @@ class TicketUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=512)
     description: str | None = None
     acceptance_criteria: str | None = None
+    business_task: str | None = None
+    decomposed_task: str | None = None
+    coding_task: str | None = None
+    ai_prompt: str | None = None
     priority: str | None = Field(default=None, pattern=r"^P[0-3]$")
     assignee_id: uuid.UUID | None = None
     labels: list[str] | None = None
@@ -54,6 +62,10 @@ class TicketResponse(BaseModel):
     title: str
     description: str | None = None
     acceptance_criteria: str | None = None
+    business_task: str | None = None
+    decomposed_task: str | None = None
+    coding_task: str | None = None
+    ai_prompt: str | None = None
     priority: str
     column_name: str
     assignee_id: uuid.UUID | None = None

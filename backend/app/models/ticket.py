@@ -70,6 +70,12 @@ class Ticket(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     acceptance_criteria: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Modular Content
+    business_task: Mapped[str | None] = mapped_column(Text, nullable=True)
+    decomposed_task: Mapped[str | None] = mapped_column(Text, nullable=True)
+    coding_task: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     # Board state
     priority: Mapped[Priority] = mapped_column(
         Enum(Priority, name="priority_enum", create_constraint=True),

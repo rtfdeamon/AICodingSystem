@@ -46,9 +46,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
       });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || 'Login failed';
+      const data = (err as { response?: { data?: { detail?: string; message?: string } } })?.response?.data;
+      const message = data?.detail || data?.message || 'Login failed';
       set({ error: message, isLoading: false });
       throw err;
     }
@@ -68,9 +67,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
       });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || 'Registration failed';
+      const data = (err as { response?: { data?: { detail?: string; message?: string } } })?.response?.data;
+      const message = data?.detail || data?.message || 'Registration failed';
       set({ error: message, isLoading: false });
       throw err;
     }

@@ -4,11 +4,13 @@ import { Eye, EyeOff, Github } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAuth } from '@/hooks/useAuth';
 import apiClient from '@/api/client';
+import { useTodoAssistantStore } from '@/stores/todoAssistantStore';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [githubError, setGithubError] = useState('');
   const { login, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
 
@@ -17,8 +19,20 @@ export function LoginPage() {
     try {
       await login(email, password);
       navigate('/board');
-    } catch {
-      // Error is set in store
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      // Only add TODO for server/network errors, not wrong credentials (401)
+      if (!status) {
+        useTodoAssistantStore.getState().addTodo({
+          severity: 'critical',
+          source: 'auto:api',
+          title: 'Логин не работает',
+          detail: 'Сетевая ошибка — backend недоступен. Запустите backend сервер.',
+          identifier: 'auth:login-fail',
+          checkKey: 'env:api-health',
+        });
+        useTodoAssistantStore.getState().open();
+      }
     }
   };
 
@@ -124,14 +138,35 @@ export function LoginPage() {
           </div>
 
           {/* GitHub OAuth */}
+          {githubError && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 mt-2">
+              {githubError}
+            </div>
+          )}
           <button
             type="button"
             onClick={async () => {
+              setGithubError('');
               try {
                 const { data } = await apiClient.get<{ url: string }>('/auth/github/url');
                 window.location.href = data.url;
-              } catch {
-                // GitHub OAuth not configured
+              } catch (err: unknown) {
+                const status = (err as { response?: { status?: number } })?.response?.status;
+                const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+                const msg = status === 501
+                  ? 'GitHub OAuth не настроен на сервере. Используйте email/пароль для входа.'
+                  : status
+                    ? `Ошибка сервера (${status}): ${detail || 'GitHub OAuth недоступен'}`
+                    : 'Сервер недоступен. Проверьте подключение.';
+                setGithubError(msg);
+                useTodoAssistantStore.getState().addTodo({
+                  severity: 'warning',
+                  source: 'auto:oauth',
+                  title: 'Continue with GitHub — ошибка',
+                  detail: msg,
+                  identifier: 'oauth:github-click',
+                  checkKey: 'oauth:github-url',
+                });
               }
             }}
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"

@@ -41,6 +41,10 @@ export interface Ticket {
   title: string;
   description?: string;
   acceptance_criteria?: string;
+  business_task?: string;
+  decomposed_task?: string;
+  coding_task?: string;
+  ai_prompt?: string;
   priority: TicketPriority;
   column_name: ColumnName;
   position: number;

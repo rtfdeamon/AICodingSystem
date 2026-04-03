@@ -13,6 +13,10 @@ interface TicketFormProps {
 export function TicketForm({ projectId, onClose }: TicketFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [businessTask, setBusinessTask] = useState('');
+  const [decomposedTask, setDecomposedTask] = useState('');
+  const [codingTask, setCodingTask] = useState('');
+  const [aiPrompt, setAiPrompt] = useState('');
   const [priority, setPriority] = useState<TicketPriority>('P2');
   const [labels, setLabels] = useState('');
   const [storyPoints, setStoryPoints] = useState('');
@@ -27,6 +31,10 @@ export function TicketForm({ projectId, onClose }: TicketFormProps) {
         project_id: projectId,
         title,
         description: description || undefined,
+        business_task: businessTask || undefined,
+        decomposed_task: decomposedTask || undefined,
+        coding_task: codingTask || undefined,
+        ai_prompt: aiPrompt || undefined,
         priority,
         labels: labels
           .split(',')
@@ -73,9 +81,65 @@ export function TicketForm({ projectId, onClose }: TicketFormProps) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detailed requirements, acceptance criteria..."
-            rows={4}
-            className="input resize-none"
+            rows={2}
+            className="input resize-none mb-3"
           />
+        </div>
+
+        <div>
+           <label htmlFor="business_task" className="mb-1.5 block text-sm font-medium text-gray-700">
+              Общая бизнес задача
+           </label>
+           <textarea
+              id="business_task"
+              value={businessTask}
+              onChange={(e) => setBusinessTask(e.target.value)}
+              placeholder="Business context and goals..."
+              rows={2}
+              className="input resize-none mb-3"
+           />
+        </div>
+
+        <div>
+           <label htmlFor="decomposed_task" className="mb-1.5 block text-sm font-medium text-gray-700">
+              Декомпозированная задача
+           </label>
+           <textarea
+              id="decomposed_task"
+              value={decomposedTask}
+              onChange={(e) => setDecomposedTask(e.target.value)}
+              placeholder="Break down of the task..."
+              rows={2}
+              className="input resize-none mb-3"
+           />
+        </div>
+
+        <div>
+           <label htmlFor="coding_task" className="mb-1.5 block text-sm font-medium text-gray-700">
+              Задача на кодирование
+           </label>
+           <textarea
+              id="coding_task"
+              value={codingTask}
+              onChange={(e) => setCodingTask(e.target.value)}
+              placeholder="Specific coding instructions..."
+              rows={2}
+              className="input resize-none mb-3"
+           />
+        </div>
+
+        <div>
+           <label htmlFor="ai_prompt" className="mb-1.5 block text-sm font-medium text-gray-700">
+              ИИ промпт
+           </label>
+           <textarea
+              id="ai_prompt"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="AI prompt text..."
+              rows={2}
+              className="input resize-none mb-3"
+           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">

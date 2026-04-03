@@ -4,9 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { FullPageSpinner } from '@/components/common/Spinner';
+import { FloatingAssistant } from '@/components/assistant/FloatingAssistant';
+import { installApiErrorInterceptor } from '@/utils/envDiagnostics';
 
 // Layout (kept eager – renders on every authenticated page)
 import { AppShell } from '@/components/layout/AppShell';
+
+// Install API error interceptor once on module load
+installApiErrorInterceptor();
 
 import type { UserRole } from '@/types';
 
@@ -100,6 +105,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <FloatingAssistant />
           <Suspense fallback={<FullPageSpinner />}>
           <Routes>
             {/* Public-only routes (redirect if logged in) */}

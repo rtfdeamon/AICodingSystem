@@ -33,7 +33,6 @@ def upgrade() -> None:
         name="priority_enum",
         create_type=True,
     )
-    priority_enum.create(op.get_bind(), checkfirst=True)
 
     column_name_enum = postgresql.ENUM(
         "backlog",
@@ -47,7 +46,6 @@ def upgrade() -> None:
         name="column_name_enum",
         create_type=True,
     )
-    column_name_enum.create(op.get_bind(), checkfirst=True)
 
     plan_status_enum = postgresql.ENUM(
         "pending",
@@ -57,7 +55,6 @@ def upgrade() -> None:
         name="plan_status_enum",
         create_type=True,
     )
-    plan_status_enum.create(op.get_bind(), checkfirst=True)
 
     ai_log_status_enum = postgresql.ENUM(
         "success",
@@ -67,7 +64,6 @@ def upgrade() -> None:
         name="ai_log_status_enum",
         create_type=True,
     )
-    ai_log_status_enum.create(op.get_bind(), checkfirst=True)
 
     code_gen_status_enum = postgresql.ENUM(
         "in_progress",
@@ -77,7 +73,6 @@ def upgrade() -> None:
         name="code_gen_status_enum",
         create_type=True,
     )
-    code_gen_status_enum.create(op.get_bind(), checkfirst=True)
 
     reviewer_type_enum = postgresql.ENUM(
         "user",
@@ -85,7 +80,6 @@ def upgrade() -> None:
         name="reviewer_type_enum",
         create_type=True,
     )
-    reviewer_type_enum.create(op.get_bind(), checkfirst=True)
 
     review_decision_enum = postgresql.ENUM(
         "approved",
@@ -94,7 +88,6 @@ def upgrade() -> None:
         name="review_decision_enum",
         create_type=True,
     )
-    review_decision_enum.create(op.get_bind(), checkfirst=True)
 
     deploy_environment_enum = postgresql.ENUM(
         "staging",
@@ -102,7 +95,6 @@ def upgrade() -> None:
         name="deploy_environment_enum",
         create_type=True,
     )
-    deploy_environment_enum.create(op.get_bind(), checkfirst=True)
 
     deploy_type_enum = postgresql.ENUM(
         "full",
@@ -110,7 +102,6 @@ def upgrade() -> None:
         name="deploy_type_enum",
         create_type=True,
     )
-    deploy_type_enum.create(op.get_bind(), checkfirst=True)
 
     deploy_status_enum = postgresql.ENUM(
         "pending",
@@ -121,7 +112,6 @@ def upgrade() -> None:
         name="deploy_status_enum",
         create_type=True,
     )
-    deploy_status_enum.create(op.get_bind(), checkfirst=True)
 
     notification_channel_enum = postgresql.ENUM(
         "in_app",
@@ -130,7 +120,6 @@ def upgrade() -> None:
         name="notification_channel_enum",
         create_type=True,
     )
-    notification_channel_enum.create(op.get_bind(), checkfirst=True)
 
     # ── users ─────────────────────────────────────────────────────────
     op.create_table(
