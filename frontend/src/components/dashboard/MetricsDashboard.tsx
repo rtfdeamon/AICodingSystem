@@ -14,6 +14,7 @@ import { clsx } from 'clsx';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import * as dashboardApi from '@/api/dashboard';
+import { listProjects } from '@/api/projects';
 import { useKanbanStore } from '@/stores/kanbanStore';
 
 type ActiveTab = 'overview' | 'pipeline' | 'ai_costs' | 'quality' | 'deployments';
@@ -43,10 +44,28 @@ export function MetricsDashboard() {
   const [qualityData, setQualityData] = useState<dashboardApi.CodeQualityResponse | null>(null);
   const [deployData, setDeployData] = useState<dashboardApi.DeploymentStatsResponse | null>(null);
 
+  // Auto-load project if none is selected
+  useEffect(() => {
+    if (currentProjectId) return;
+    let cancelled = false;
+    async function loadProject() {
+      try {
+        const res = await listProjects();
+        if (!cancelled && res.items.length > 0) {
+          useKanbanStore.getState().fetchBoard(res.items[0].id);
+        }
+      } catch {
+        // ignore — fetchData will show the error
+      }
+    }
+    loadProject();
+    return () => { cancelled = true; };
+  }, [currentProjectId]);
+
   const fetchData = useCallback(async () => {
     if (!currentProjectId) {
-      setError('No project selected. Please open the Board first to create or select a project.');
-      setIsLoading(false);
+      setError('Loading project...');
+      setIsLoading(true);
       return;
     }
     setIsLoading(true);

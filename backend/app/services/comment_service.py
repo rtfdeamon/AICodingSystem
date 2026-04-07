@@ -64,7 +64,7 @@ async def list_comments(
     # Build threaded structure: return top-level comments; replies are nested
     # via the ORM relationship.  For the API we flatten but include parent_id
     # so the frontend can reconstruct the tree.
-    return [CommentResponse.model_validate(c) for c in comments]
+    return [CommentResponse.from_orm_comment(c) for c in comments]
 
 
 async def update_comment(

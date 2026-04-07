@@ -46,7 +46,7 @@ async def create_comment(
 ) -> CommentResponse:
     """Add a comment to a ticket.  Optionally reply to a parent comment."""
     comment = await comment_service.create_comment(db, ticket_id, current_user.id, data)
-    return CommentResponse.model_validate(comment)
+    return CommentResponse.from_orm_comment(comment)
 
 
 @router.patch("/comments/{comment_id}", response_model=CommentResponse)

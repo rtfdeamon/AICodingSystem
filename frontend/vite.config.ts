@@ -22,11 +22,11 @@ export default defineConfig({
     host: "0.0.0.0",
     proxy: {
       "/api": {
-        target: process.env.VITE_API_URL || "http://localhost:8001",
+        target: process.env.VITE_API_URL || "http://127.0.0.1:8010",
         changeOrigin: true,
       },
       "/ws": {
-        target: (process.env.VITE_WS_URL || "ws://localhost:8001"),
+        target: (process.env.VITE_WS_URL || "ws://127.0.0.1:8010"),
         ws: true,
         changeOrigin: true,
       },
