@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # ── Default rate-limit profiles ─────────────────────────────────────
 _RATE_LIMITS: dict[str, tuple[int, int]] = {
     # (max_requests, window_seconds)
-    "default": (100, 60),
+    "default": (500, 60),
     "ai": (10, 60),
 }
 

@@ -7,7 +7,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, cast, func, select, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_log import AiLog
@@ -120,17 +120,25 @@ async def get_ai_costs(
     )
     cost_by_agent = {name: round(float(cost), 4) for name, cost in result.all()}
 
-    # Cost by day
+    # Cost by day — use date() for SQLite compat, date_trunc for PostgreSQL
+    from app.config import settings
+
+    _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+    if _is_sqlite:
+        day_expr = func.date(AiLog.created_at).label("day")
+    else:
+        day_expr = func.date_trunc("day", AiLog.created_at).label("day")
+
     result = await db.execute(
-        select(
-            func.date_trunc("day", AiLog.created_at).label("day"),
-            func.sum(AiLog.cost_usd),
-        )
+        select(day_expr, func.sum(AiLog.cost_usd))
         .where(*base_filter)
         .group_by("day")
         .order_by("day")
     )
-    cost_by_day = {row[0].strftime("%Y-%m-%d"): round(float(row[1]), 4) for row in result.all()}
+    cost_by_day = {}
+    for row in result.all():
+        day_str = row[0] if isinstance(row[0], str) else row[0].strftime("%Y-%m-%d")
+        cost_by_day[day_str] = round(float(row[1]), 4)
 
     # Totals
     totals_result = await db.execute(

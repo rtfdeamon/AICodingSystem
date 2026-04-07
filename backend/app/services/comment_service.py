@@ -47,6 +47,14 @@ async def create_comment(
     await db.flush()
     await db.refresh(comment)
 
+    # Eagerly load the author relationship for the response
+    if comment.author_id:
+        from app.models.user import User
+        result = await db.execute(
+            select(User).where(User.id == comment.author_id)
+        )
+        comment.author = result.scalar_one_or_none()
+
     logger.info("Comment created: %s on ticket %s", comment.id, ticket_id)
     return comment
 
