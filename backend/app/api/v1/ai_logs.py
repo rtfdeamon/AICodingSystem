@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,49 +16,14 @@ from app.api.deps import get_current_user
 from app.database import get_db
 from app.models.ai_log import AiLog, AiLogStatus
 from app.models.user import User
+from app.schemas.ai_log import AILogEntry, AILogListResponse, AILogStats
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-# ---------------------------------------------------------------------------
-# Response schemas
-# ---------------------------------------------------------------------------
-
-
-class AILogEntry(BaseModel):
-    id: str
-    ticket_id: str | None = None
-    agent: str
-    model: str
-    action: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cost_usd: float = 0.0
-    duration_ms: int = 0
-    status: str = "success"
-    error_message: str | None = None
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class AILogListResponse(BaseModel):
-    items: list[AILogEntry]
-    total: int
-    page: int
-    page_size: int
-
-
-class AILogStats(BaseModel):
-    total_requests: int = 0
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
-    total_cost_usd: float = 0.0
-    average_duration_ms: float = 0.0
-    by_agent: dict[str, int] = {}
-    by_model: dict[str, int] = {}
+# Schemas imported from app.schemas.ai_log
 
 
 # ---------------------------------------------------------------------------

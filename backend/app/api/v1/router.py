@@ -16,6 +16,7 @@ from app.api.v1 import (
     github_oauth,
     kanban,
     notifications,
+    pipeline,
     plans,
     projects,
     reviews,
@@ -82,6 +83,9 @@ router.include_router(git_ops.router, tags=["git"])
 
 # ── Context Engine ───────────────────────────────────────────────────
 router.include_router(context.router, tags=["context"])
+
+# ── Pipeline (background task monitoring) ────────────────────────────
+router.include_router(pipeline.router, tags=["pipeline"])
 
 
 @router.get("/ping", tags=["health"])

@@ -64,6 +64,11 @@ class Settings(BaseSettings):
 
     # ── n8n Workflow Engine (optional) ──────────────────────────────────
     N8N_BASE_URL: str | None = None
+    N8N_WEBHOOK_SECRET: str | None = None
+
+    # ── Pipeline ───────────────────────────────────────────────────────
+    REPO_BASE_PATH: str = "./repos"
+    PROMETHEUS_URL: str = "http://prometheus:9090"
 
     # ── Messaging (optional) ────────────────────────────────────────────
     SLACK_BOT_TOKEN: str | None = None

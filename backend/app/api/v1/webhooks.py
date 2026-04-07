@@ -56,19 +56,51 @@ class N8NDeployStatusPayload(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# n8n webhook authentication
+# ---------------------------------------------------------------------------
+
+
+async def _verify_n8n_signature(request: Request) -> None:
+    """Verify n8n webhook signature using HMAC-SHA256.
+
+    If ``N8N_WEBHOOK_SECRET`` is not configured, verification is skipped
+    (development mode).  In production, always set this secret.
+    """
+    secret = settings.N8N_WEBHOOK_SECRET
+    if not secret:
+        # Development mode — skip verification
+        return
+
+    signature = request.headers.get("X-N8N-Signature")
+    if not signature:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-N8N-Signature header.",
+        )
+
+    body = await request.body()
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected, signature):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid n8n webhook signature.",
+        )
+
+
+# ---------------------------------------------------------------------------
 # n8n webhook receivers
 # ---------------------------------------------------------------------------
 
 
 @router.post("/webhooks/n8n/ticket-update")
 async def n8n_ticket_update(
+    request: Request,
     payload: N8NTicketUpdatePayload,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Receive ticket update events from n8n workflows.
-
-    Processes the update and triggers board state changes based on action.
-    """
+    """Receive ticket update events from n8n workflows."""
+    await _verify_n8n_signature(request)
     logger.info(
         "n8n ticket-update webhook: ticket=%s action=%s",
         payload.ticket_id,
@@ -91,10 +123,12 @@ async def n8n_ticket_update(
 
 @router.post("/webhooks/n8n/build-complete")
 async def n8n_build_complete(
+    request: Request,
     payload: N8NBuildCompletePayload,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Receive build completion events from the CI/CD pipeline via n8n."""
+    await _verify_n8n_signature(request)
     logger.info(
         "n8n build-complete webhook: ticket=%s status=%s",
         payload.ticket_id,
@@ -121,10 +155,12 @@ async def n8n_build_complete(
 
 @router.post("/webhooks/n8n/deploy-status")
 async def n8n_deploy_status(
+    request: Request,
     payload: N8NDeployStatusPayload,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Receive deployment status updates from n8n."""
+    await _verify_n8n_signature(request)
     logger.info(
         "n8n deploy-status webhook: ticket=%s env=%s status=%s",
         payload.ticket_id,

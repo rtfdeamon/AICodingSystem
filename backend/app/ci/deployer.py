@@ -255,7 +255,9 @@ async def check_deploy_health(deploy_id: str) -> HealthStatus:
     logger.info("Checking health for deployment %s", deploy_id)
 
     # Query Prometheus metrics via the monitoring endpoint
-    prometheus_url = "http://prometheus:9090"
+    from app.config import settings
+
+    prometheus_url = settings.PROMETHEUS_URL
     metrics: dict[str, Any] = {}
 
     try:

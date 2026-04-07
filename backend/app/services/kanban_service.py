@@ -216,6 +216,28 @@ async def move_ticket(
     except Exception as exc:
         logger.warning("Failed to broadcast ticket_moved event: %s", exc)
 
+    # Dispatch AI pipeline tasks based on the column transition
+    try:
+        from app.services.pipeline_trigger import on_ticket_moved
+
+        bg_task_id = await on_ticket_moved(
+            db=db,
+            ticket_id=ticket.id,
+            from_column=from_column,
+            to_column=to_column,
+            project_id=ticket.project_id,
+        )
+        if bg_task_id:
+            logger.info(
+                "Dispatched background task %s for ticket %s (%s -> %s)",
+                bg_task_id,
+                ticket_id,
+                from_column,
+                to_column,
+            )
+    except Exception as exc:
+        logger.warning("Failed to dispatch pipeline task: %s", exc)
+
     return ticket
 
 
