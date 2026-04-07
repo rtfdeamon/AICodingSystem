@@ -5,6 +5,10 @@ export interface CreateTicketPayload {
   title: string;
   description?: string;
   acceptance_criteria?: string;
+  business_task?: string;
+  decomposed_task?: string;
+  coding_task?: string;
+  ai_prompt?: string;
   priority?: Ticket['priority'];
   labels?: string[];
 }
